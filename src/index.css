@@ -1,0 +1,49 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+:root {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* slate */
+  --slate-950: #020617;
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+
+  /* акценты */
+  --cyan-300: #67e8f9;
+  --cyan-200: #a5f3fc;
+  --rose-300: #fda4af;
+  --rose-400: #fb7185;
+  --amber-300: #fcd34d;
+  --amber-400: #fbbf24;
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --emerald-300: #6ee7b7;
+  --emerald-400: #34d399;
+  --indigo-400: #818cf8;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  scrollbar-color: var(--slate-700) transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--slate-950);
+  color: var(--slate-100);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
