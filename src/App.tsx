@@ -9,8 +9,10 @@ import { Icon } from "./components/Icon/Icon";
 import { initialLogs, incomingLogs } from "./data/data";
 import s from "./App.module.css";
 
+
 export default function App() {
   const [logs, setLogs] = useState(initialLogs);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const timers = incomingLogs.map((log, index) =>
@@ -25,16 +27,22 @@ export default function App() {
     return () => timers.forEach(window.clearTimeout);
   }, []);
 
-
-
+  useEffect(() => {
+    if (!isSidebarOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsSidebarOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isSidebarOpen]);
 
   return (
     <div className={s.page}>
       <div className={s.shell}>
-        <Sidebar />
+        <Sidebar isOpen={isSidebarOpen} onClose={()=> setIsSidebarOpen(false)} />
 
         <main className={s.main}>
-          <Header />
+          <Header onMenuClick={()=> setIsSidebarOpen(true)}/>
 
           <div className={s.content}>
             <div className={s.pageHead}>

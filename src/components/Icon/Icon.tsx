@@ -1,3 +1,5 @@
+
+
 const paths = {
   activity: <path d="M3 12h4l2.5-7 5 14 2.5-7h4" />,
   alert: (
@@ -57,7 +59,14 @@ const paths = {
   ),
 };
 
-export function Icon({ name, size = 16, className }) {
+interface IconProps {
+  name: IconName;
+  size?: number;
+  className?: string;
+}
+
+
+export function Icon ({ name, size = 16, className}: IconProps){
   return (
     <svg
       aria-hidden="true"
@@ -75,3 +84,6 @@ export function Icon({ name, size = 16, className }) {
     </svg>
   );
 }
+
+
+export type IconName = keyof typeof paths;

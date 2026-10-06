@@ -1,10 +1,10 @@
-import { Icon } from "../Icon/Icon"
+import { Icon } from "../Icon/Icon";
 import { statCards } from "../../data/data";
 import { cx } from "../../utils/cx";
 import s from "./StatCard.module.css";
 
-export function StatCard(){
-  return(
+export function StatCard() {
+  return (
     <section className={s.grid}>
       {statCards.map((card) => (
         <article key={card.label} className={s.card} data-tone={card.tone}>
@@ -21,5 +21,5 @@ export function StatCard(){
         </article>
       ))}
     </section>
-  )
+  );
 }

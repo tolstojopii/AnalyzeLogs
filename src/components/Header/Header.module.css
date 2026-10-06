@@ -66,6 +66,25 @@
   color: var(--slate-200);
 }
 
+.burger {
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--slate-800);
+  border-radius: 0.75rem;
+  background: rgb(15 23 42 / 0.6);
+  color: var(--slate-300);
+  cursor: pointer;
+}
+
+@media (min-width: 1024px) {
+  .burger {
+    display: none;
+  }
+}
+
 .actions {
   display: flex;
   align-items: center;

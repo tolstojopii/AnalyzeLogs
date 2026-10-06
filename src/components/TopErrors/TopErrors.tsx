@@ -11,7 +11,6 @@ export function TopErrors() {
         </div>
         <p className={s.total}>94 total</p>
       </div>
-
       <div className={s.list}>
         {topErrors.map((error, index) => (
           <div key={error.label} className={s.item}>

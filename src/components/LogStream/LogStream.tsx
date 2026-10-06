@@ -2,10 +2,17 @@ import { useMemo, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import { cx } from "../../utils/cx";
 import s from "./LogStream.module.css";
+import type { LogEntry, LogLevel } from "../../data/data";
 
-const FILTERS = ["ALL", "ERROR", "WARN", "INFO"];
+type Filter = LogLevel | "ALL"
 
-function pillClass(level) {
+const FILTERS: readonly Filter[] = ["ALL", "ERROR", "WARN", "INFO"];
+
+interface LogStreamProps{
+  logs: LogEntry[];
+}
+
+function pillClass(level: LogLevel):string {
   switch (level) {
     case "ERROR": return `${s.pill} ${s.pillError}`;
     case "WARN":  return `${s.pill} ${s.pillWarn}`;
@@ -14,8 +21,8 @@ function pillClass(level) {
   }
 }
 
-export function LogStream({ logs }) {
-  const [filter, setFilter] = useState("ALL");
+export function LogStream({ logs }: LogStreamProps) {
+  const [filter, setFilter] = useState<Filter>("ALL");
 
   const visibleLogs = useMemo(
     () => logs.filter((log) => filter === "ALL" || log.level === filter),

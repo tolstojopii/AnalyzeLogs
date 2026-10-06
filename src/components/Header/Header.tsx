@@ -1,10 +1,22 @@
-import { Icon } from "./../Icon/Icon";
+import { Icon } from "../Icon/Icon";
 import s from "./Header.module.css";
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   return (
     <header className={s.header}>
       <div className={s.inner}>
+        <button
+          type="button"
+          className={s.burger}
+          onClick={onMenuClick}
+          aria-label="open menu"
+        >
+          <Icon name="logs" size={20} />
+        </button>
         <div className={s.mobileBrand}>
           <div className={s.mobileBrandMark}>
             <Icon name="activity" size={20} />
