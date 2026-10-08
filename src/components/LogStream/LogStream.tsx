@@ -4,30 +4,48 @@ import { cx } from "../../utils/cx";
 import s from "./LogStream.module.css";
 import type { LogEntry, LogLevel } from "../../data/data";
 
-type Filter = LogLevel | "ALL"
+type Filter = LogLevel | "ALL";
 
-const FILTERS: readonly Filter[] = ["ALL", "ERROR", "WARN", "INFO"];
+const FILTERS: readonly Filter[] = ["ALL", "ERROR", "WARN", "INFO", "DEBUG"];
 
-interface LogStreamProps{
+interface LogStreamProps {
   logs: LogEntry[];
+  searchQuery: string;
 }
 
-function pillClass(level: LogLevel):string {
+function pillClass(level: LogLevel): string {
   switch (level) {
-    case "ERROR": return `${s.pill} ${s.pillError}`;
-    case "WARN":  return `${s.pill} ${s.pillWarn}`;
-    case "INFO":  return `${s.pill} ${s.pillInfo}`;
-    default:      return s.pill;
+    case "ERROR":
+      return `${s.pill} ${s.pillError}`;
+    case "WARN":
+      return `${s.pill} ${s.pillWarn}`;
+    case "INFO":
+      return `${s.pill} ${s.pillInfo}`;
+    case "DEBUG":
+      return `${s.pill} ${s.pillDebug}`;
+    default:
+      return s.pill;
   }
 }
 
-export function LogStream({ logs }: LogStreamProps) {
+export function LogStream({ logs, searchQuery }: LogStreamProps) {
   const [filter, setFilter] = useState<Filter>("ALL");
 
-  const visibleLogs = useMemo(
-    () => logs.filter((log) => filter === "ALL" || log.level === filter),
-    [filter, logs],
-  );
+  const visibleLogs = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+
+    return logs.filter((log) => {
+      const matchesLevel = filter === "ALL" || log.level === filter;
+
+      const matchesSearch =
+        query === "" ||
+        log.message.toLowerCase().includes(query) ||
+        log.service.toLowerCase().includes(query) ||
+        log.trace.toLowerCase().includes(query);
+
+      return matchesLevel && matchesSearch;
+    });
+  }, [filter, logs, searchQuery]);
 
   return (
     <section className={s.panel}>
@@ -91,7 +109,7 @@ export function LogStream({ logs }: LogStreamProps) {
               </div>
             ))}
             {visibleLogs.length === 0 && (
-              <div className={s.empty}>No logs match this level.</div>
+              <div className={s.empty}>logs empty</div>
             )}
           </div>
         </div>
@@ -99,4 +117,3 @@ export function LogStream({ logs }: LogStreamProps) {
     </section>
   );
 }
-

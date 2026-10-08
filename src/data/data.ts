@@ -1,5 +1,5 @@
 import type { IconName } from "../components/Icon/Icon";
-export type LogLevel = "ERROR" | "WARN" | "INFO";
+export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG";
 
 export interface LogEntry {
   time: string;
@@ -43,6 +43,13 @@ export const initialLogs: LogEntry[] = [
     service: "auth-service",
     message: "Rate limit approaching for client 10.0.4.21",
     trace: "req_8f319",
+  },
+  {
+    time: "16:21:54.547",
+    level: "DEBUG",
+    service: "reg-service",
+    message: "Some error",
+    trace: "req_9c381a",
   },
   {
     time: "14:42:13.041",

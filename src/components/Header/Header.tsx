@@ -3,9 +3,11 @@ import s from "./Header.module.css";
 
 interface HeaderProps {
   onMenuClick: () => void;
+  searchQuery: string;
+  onSearchQuery: (value: string)  => void
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, searchQuery, onSearchQuery }: HeaderProps) {
   return (
     <header className={s.header}>
       <div className={s.inner}>
@@ -35,6 +37,9 @@ export function Header({ onMenuClick }: HeaderProps) {
             type="text"
             className={s.search}
             placeholder="Search logs"
+            value={searchQuery}
+            onChange={(e) => onSearchQuery(e.target.value)}
+            aria-label="Search logs"
           ></input>
 
           <button type="button" className={s.iconButton} aria-label="Settings">

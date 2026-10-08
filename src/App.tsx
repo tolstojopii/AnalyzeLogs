@@ -13,6 +13,7 @@ import s from "./App.module.css";
 export default function App() {
   const [logs, setLogs] = useState(initialLogs);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const timers = incomingLogs.map((log, index) =>
@@ -42,7 +43,7 @@ export default function App() {
         <Sidebar isOpen={isSidebarOpen} onClose={()=> setIsSidebarOpen(false)} />
 
         <main className={s.main}>
-          <Header onMenuClick={()=> setIsSidebarOpen(true)}/>
+          <Header onMenuClick={()=> setIsSidebarOpen(true)} searchQuery={searchQuery} onSearchQuery={setSearchQuery} />
 
           <div className={s.content}>
             <div className={s.pageHead}>
@@ -81,7 +82,7 @@ export default function App() {
               <TopErrors />
             </section>
 
-            <LogStream logs={logs} />
+            <LogStream logs={logs}  searchQuery={searchQuery} />
           </div>
         </main>
       </div>

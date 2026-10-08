@@ -219,6 +219,12 @@
   color: var(--sky-300);
 }
 
+.pillDebug {
+  border-color: rgba(201, 162, 245, 0.3);
+  background: rgba(85, 68, 112, 0.1);
+  color: var(--indigo-400);
+}
+
 .empty {
   padding: 3rem 1.5rem;
   text-align: center;
