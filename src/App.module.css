@@ -103,6 +103,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  appearance: none;
   border: 1px solid var(--slate-800);
   border-radius: 0.75rem;
   background: rgb(15 23 42 / 0.6);

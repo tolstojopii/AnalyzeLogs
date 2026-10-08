@@ -1,7 +1,17 @@
 import type { IconName } from "../components/Icon/Icon";
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG";
 
+export type Period = "1h" | "6h" | "24h" | "7d";
+
+export const PERIOD_MS: Record<Period, number> = {
+  "1h":  1 * 60 * 60 * 1000,
+  "6h":  6 * 60 * 60 * 1000,
+  "24h": 24 * 60 * 60 * 1000,
+  "7d":  7 * 24 * 60 * 60 * 1000,
+};
+
 export interface LogEntry {
+  timestamp: number;
   time: string;
   level: LogLevel;
   service: string;
@@ -31,6 +41,7 @@ export interface ErrorPoint {
 
 export const initialLogs: LogEntry[] = [
   {
+    timestamp: Date.now() - 5 * 60 * 1000, 
     time: "14:42:18.904",
     level: "ERROR",
     service: "payment-api",
@@ -38,6 +49,7 @@ export const initialLogs: LogEntry[] = [
     trace: "req_8f31a",
   },
   {
+    timestamp: Date.now() - 2 * 60 * 60 * 1000, 
     time: "14:42:16.217",
     level: "WARN",
     service: "auth-service",
@@ -45,6 +57,7 @@ export const initialLogs: LogEntry[] = [
     trace: "req_8f319",
   },
   {
+    timestamp: Date.now() - 20 * 60 * 1000, 
     time: "16:21:54.547",
     level: "DEBUG",
     service: "reg-service",
@@ -52,6 +65,7 @@ export const initialLogs: LogEntry[] = [
     trace: "req_9c381a",
   },
   {
+    timestamp: Date.now() - 3 * 60 * 60 * 1000, 
     time: "14:42:13.041",
     level: "INFO",
     service: "edge-router",
@@ -59,6 +73,7 @@ export const initialLogs: LogEntry[] = [
     trace: "req_8f318",
   },
   {
+    timestamp: Date.now() - 6 * 60 * 60 * 1000, 
     time: "14:42:08.653",
     level: "ERROR",
     service: "worker-sync",
@@ -66,6 +81,7 @@ export const initialLogs: LogEntry[] = [
     trace: "req_8f317",
   },
   {
+    timestamp: Date.now() - 5 * 60 * 60 * 1000,
     time: "14:42:02.190",
     level: "INFO",
     service: "user-service",
@@ -73,6 +89,7 @@ export const initialLogs: LogEntry[] = [
     trace: "req_8f316",
   },
   {
+    timestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
     time: "14:41:58.772",
     level: "WARN",
     service: "database",
@@ -83,6 +100,7 @@ export const initialLogs: LogEntry[] = [
 
 export const incomingLogs: LogEntry[] = [
   {
+    timestamp: Date.now() - 30 * 1000,
     time: "14:42:22.106",
     level: "INFO",
     service: "edge-router",
@@ -90,6 +108,7 @@ export const incomingLogs: LogEntry[] = [
     trace: "req_8f31b",
   },
   {
+    timestamp: Date.now() -  15 * 1000,
     time: "14:42:25.448",
     level: "WARN",
     service: "cache-primary",
@@ -97,6 +116,7 @@ export const incomingLogs: LogEntry[] = [
     trace: "req_8f31c",
   },
   {
+    timestamp: Date.now() - 45 * 1000,
     time: "14:42:29.813",
     level: "ERROR",
     service: "payment-api",

@@ -225,6 +225,11 @@
   color: var(--indigo-400);
 }
 
+.filterButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .empty {
   padding: 3rem 1.5rem;
   text-align: center;

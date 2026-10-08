@@ -6,14 +6,14 @@ import { ErrorsChart } from "./components/ErrorsChart/ErrorsChart";
 import { TopErrors } from "./components/TopErrors/TopErrors";
 import { LogStream } from "./components/LogStream/LogStream";
 import { Icon } from "./components/Icon/Icon";
-import { initialLogs, incomingLogs } from "./data/data";
+import { type Period, initialLogs, incomingLogs } from "./data/data";
 import s from "./App.module.css";
-
 
 export default function App() {
   const [logs, setLogs] = useState(initialLogs);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState("");
+  const [period, setPeriod] = useState<Period>("24h");
 
   useEffect(() => {
     const timers = incomingLogs.map((log, index) =>
@@ -40,10 +40,17 @@ export default function App() {
   return (
     <div className={s.page}>
       <div className={s.shell}>
-        <Sidebar isOpen={isSidebarOpen} onClose={()=> setIsSidebarOpen(false)} />
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
 
         <main className={s.main}>
-          <Header onMenuClick={()=> setIsSidebarOpen(true)} searchQuery={searchQuery} onSearchQuery={setSearchQuery} />
+          <Header
+            onMenuClick={() => setIsSidebarOpen(true)}
+            searchQuery={searchQuery}
+            onSearchQuery={setSearchQuery}
+          />
 
           <div className={s.content}>
             <div className={s.pageHead}>
@@ -61,17 +68,17 @@ export default function App() {
               </div>
 
               <div className={s.filters}>
-                <div className={s.period}>
-                  Last 24 hours
-                  <Icon name="chevron" size={12} className="rotate" />
-                </div>
-                <button
-                  type="button"
-                  className={s.iconButton}
-                  aria-label="Download"
+                <select
+                  className={s.period}
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value as Period)}
+                  aria-label="Time period"
                 >
-                  <Icon name="download" />
-                </button>
+                  <option value="1h">1 hour</option>
+                  <option value="6h">6 hours</option>
+                  <option value="24h">24 hours</option>
+                  <option value="7d">7 days</option>
+                </select>
               </div>
             </div>
 
@@ -82,7 +89,7 @@ export default function App() {
               <TopErrors />
             </section>
 
-            <LogStream logs={logs}  searchQuery={searchQuery} />
+            <LogStream logs={logs} searchQuery={searchQuery} period={period} />
           </div>
         </main>
       </div>

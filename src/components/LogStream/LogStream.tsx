@@ -2,13 +2,21 @@ import { useMemo, useState } from "react";
 import { Icon } from "../Icon/Icon";
 import { cx } from "../../utils/cx";
 import s from "./LogStream.module.css";
-import type { LogEntry, LogLevel } from "../../data/data";
+import {
+  type Period,
+  type LogEntry,
+  type LogLevel,
+  PERIOD_MS,
+} from "../../data/data";
+import { downloadJSON } from "../../utils/download";
+
 
 const LEVELS: readonly LogLevel[] = ["ERROR", "WARN", "INFO", "DEBUG"];
 
 interface LogStreamProps {
   logs: LogEntry[];
   searchQuery: string;
+  period: Period;
 }
 
 function pillClass(level: LogLevel): string {
@@ -26,21 +34,21 @@ function pillClass(level: LogLevel): string {
   }
 }
 
-export function LogStream({ logs, searchQuery }: LogStreamProps) {
+export function LogStream({ logs, searchQuery, period }: LogStreamProps) {
   const [levels, setLevels] = useState<LogLevel[]>([]);
 
   const toggleLevel = (level: LogLevel) => {
-  setLevels(prev =>
-    prev.includes(level)
-      ? prev.filter(l => l !== level) 
-      : [...prev, level],               
-  );
-};
+    setLevels((prev) =>
+      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level],
+    );
+  };
+
 
   const visibleLogs = useMemo(() => {
-    const query = searchQuery.trim().toLocaleLowerCase();
-
+    const query = searchQuery.trim().toLowerCase();
+    const threshold = Date.now() - PERIOD_MS[period];
     return logs.filter((log) => {
+      const matchesPeriod = log.timestamp >= threshold;
       const matchesLevel = levels.length === 0 || levels.includes(log.level);
 
       const matchesSearch =
@@ -49,9 +57,15 @@ export function LogStream({ logs, searchQuery }: LogStreamProps) {
         log.service.toLowerCase().includes(query) ||
         log.trace.toLowerCase().includes(query);
 
-      return matchesLevel && matchesSearch;
+      return matchesLevel && matchesSearch && matchesPeriod;
     });
-  }, [levels, logs, searchQuery]);
+  }, [levels, logs, searchQuery, period]);
+
+  
+  const handleDownload =()=>{
+    const filename = `logs-${new Date().toISOString().slice(0,10)}.json`;
+    downloadJSON(visibleLogs, filename)
+  }
 
   return (
     <section className={s.panel}>
@@ -83,11 +97,23 @@ export function LogStream({ logs, searchQuery }: LogStreamProps) {
             {LEVELS.map((level) => {
               const isActive = levels.includes(level);
 
-              return <button key={level} type="button" onClick={()=> toggleLevel(level)} className={cx(s.tab, isActive && s.tabActive)}>{level}</button>;
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => toggleLevel(level)}
+                  className={cx(s.tab, isActive && s.tabActive)}
+                >
+                  {level}
+                </button>
+              );
             })}
           </div>
           <button type="button" className={s.filterButton} aria-label="Filter">
             <Icon name="filter" />
+          </button>
+          <button type="button" className={s.filterButton} onClick={handleDownload} aria-label="Download logs" disabled={visibleLogs.length === 0}>
+            <Icon name="download"/>
           </button>
         </div>
       </div>
@@ -118,7 +144,10 @@ export function LogStream({ logs, searchQuery }: LogStreamProps) {
               </div>
             ))}
             {visibleLogs.length === 0 && (
-              <div className={s.empty}>logs empty</div>
+              <div className={s.empty}>
+                No logs match your filters. Try a different period or clear the
+                search
+              </div>
             )}
           </div>
         </div>
