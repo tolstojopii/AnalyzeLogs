@@ -4,9 +4,7 @@ import { cx } from "../../utils/cx";
 import s from "./LogStream.module.css";
 import type { LogEntry, LogLevel } from "../../data/data";
 
-type Filter = LogLevel | "ALL";
-
-const FILTERS: readonly Filter[] = ["ALL", "ERROR", "WARN", "INFO", "DEBUG"];
+const LEVELS: readonly LogLevel[] = ["ERROR", "WARN", "INFO", "DEBUG"];
 
 interface LogStreamProps {
   logs: LogEntry[];
@@ -29,13 +27,21 @@ function pillClass(level: LogLevel): string {
 }
 
 export function LogStream({ logs, searchQuery }: LogStreamProps) {
-  const [filter, setFilter] = useState<Filter>("ALL");
+  const [levels, setLevels] = useState<LogLevel[]>([]);
+
+  const toggleLevel = (level: LogLevel) => {
+  setLevels(prev =>
+    prev.includes(level)
+      ? prev.filter(l => l !== level) 
+      : [...prev, level],               
+  );
+};
 
   const visibleLogs = useMemo(() => {
     const query = searchQuery.trim().toLocaleLowerCase();
 
     return logs.filter((log) => {
-      const matchesLevel = filter === "ALL" || log.level === filter;
+      const matchesLevel = levels.length === 0 || levels.includes(log.level);
 
       const matchesSearch =
         query === "" ||
@@ -45,7 +51,7 @@ export function LogStream({ logs, searchQuery }: LogStreamProps) {
 
       return matchesLevel && matchesSearch;
     });
-  }, [filter, logs, searchQuery]);
+  }, [levels, logs, searchQuery]);
 
   return (
     <section className={s.panel}>
@@ -66,16 +72,19 @@ export function LogStream({ logs, searchQuery }: LogStreamProps) {
 
         <div className={s.controls}>
           <div className={s.tabs}>
-            {FILTERS.map((level) => (
-              <button
-                key={level}
-                type="button"
-                onClick={() => setFilter(level)}
-                className={cx(s.tab, filter === level && s.tabActive)}
-              >
-                {level}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => setLevels([])}
+              className={cx(s.tab, levels.length === 0 && s.tabActive)}
+            >
+              ALL
+            </button>
+
+            {LEVELS.map((level) => {
+              const isActive = levels.includes(level);
+
+              return <button key={level} type="button" onClick={()=> toggleLevel(level)} className={cx(s.tab, isActive && s.tabActive)}>{level}</button>;
+            })}
           </div>
           <button type="button" className={s.filterButton} aria-label="Filter">
             <Icon name="filter" />
