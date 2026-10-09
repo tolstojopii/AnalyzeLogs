@@ -156,6 +156,7 @@
   padding-block: 0.875rem;
   font-size: 0.875rem;
   transition: background-color 0.15s;
+  cursor: pointer;
 }
 .row:last-child {
   border-bottom: 0;

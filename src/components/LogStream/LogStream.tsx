@@ -17,6 +17,7 @@ interface LogStreamProps {
   searchQuery: string;
   period: Period;
   onCopyTrace: (message: string) => void;
+  onSelectLog: (log: LogEntry) => void;
 }
 
 function pillClass(level: LogLevel): string {
@@ -39,6 +40,7 @@ export function LogStream({
   searchQuery,
   period,
   onCopyTrace,
+  onSelectLog,
 }: LogStreamProps) {
   const [levels, setLevels] = useState<LogLevel[]>([]);
 
@@ -148,7 +150,19 @@ export function LogStream({
 
           <div>
             {visibleLogs.map((log) => (
-              <div key={`${log.time}-${log.trace}`} className={s.row}>
+              <div
+                key={`${log.time}-${log.trace}`}
+                className={s.row}
+                onClick={() => onSelectLog(log)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectLog(log);
+                  }
+                }}
+              >
                 <span className={s.time}>{log.time}</span>
                 <span>
                   <span className={pillClass(log.level)}>{log.level}</span>
@@ -160,7 +174,10 @@ export function LogStream({
                   <button
                     className={s.traceCopy}
                     type="button"
-                    onClick={() => handleCopy(log.trace)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy(log.trace);
+                    }}
                     aria-label={`Copy trace ${log.trace}`}
                   >
                     <Icon name="copy" size={12} />

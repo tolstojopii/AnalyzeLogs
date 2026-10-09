@@ -6,8 +6,9 @@ import { ErrorsChart } from "./components/ErrorsChart/ErrorsChart";
 import { TopErrors } from "./components/TopErrors/TopErrors";
 import { LogStream } from "./components/LogStream/LogStream";
 import { Toast } from "./components/Toast/Toast";
-import { type Period, initialLogs, incomingLogs } from "./data/data";
+import { type Period, initialLogs, incomingLogs, type LogEntry } from "./data/data";
 import s from "./App.module.css";
+import { LogDetails } from "./components/LogDetails/LogDetails";
 
 export default function App() {
   const [logs, setLogs] = useState(initialLogs);
@@ -15,6 +16,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [period, setPeriod] = useState<Period>("24h");
   const [toast, setToast] = useState<string | null>(null);
+  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
   useEffect(() => {
     const timers = incomingLogs.map((log, index) =>
@@ -28,6 +30,15 @@ export default function App() {
 
     return () => timers.forEach(window.clearTimeout);
   }, []);
+
+  useEffect(() => {
+    if (!selectedLog) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedLog(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedLog]);
 
   useEffect(() => {
     if (!isSidebarOpen) return;
@@ -90,11 +101,24 @@ export default function App() {
               <TopErrors />
             </section>
 
-            <LogStream logs={logs} searchQuery={searchQuery} period={period} onCopyTrace={setToast} />
+            <LogStream
+              logs={logs}
+              searchQuery={searchQuery}
+              period={period}
+              onCopyTrace={setToast}
+              onSelectLog={setSelectedLog}
+            />
           </div>
         </main>
-        <Toast message={toast} onClose={() => setToast(null)}/>
       </div>
+      {selectedLog && (
+        <LogDetails
+          log={selectedLog}
+          onClose={() => setSelectedLog(null)}
+          onCopyTrace={setToast}
+        />
+      )}
+      <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

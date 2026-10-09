@@ -49,6 +49,12 @@ const paths = {
   check: (
     <path d="m5 12 5 5L20 7" />
   ),
+  close:(
+    <>
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+    </>
+  ),
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />
