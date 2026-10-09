@@ -254,3 +254,66 @@
 .traceCopy:hover {
   opacity: 1;
 }
+
+
+.serviceFilter {
+  position: relative;   
+}
+
+.toggleServiceOpen {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--slate-800);
+  border-radius: 0.75rem;
+  background: rgb(2 6 23 / 0.6);
+  color: var(--slate-300);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.toggleServiceOpen:hover {
+  color: var(--slate-100);
+  border-color: var(--slate-700);
+}
+
+.serviceDropdown {
+  position: absolute;
+  top: calc(100% + 4px);       
+  left: 0;                     
+  z-index: 100;
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem;
+
+  border: 1px solid var(--slate-800);
+  border-radius: 0.75rem;
+  background: var(--slate-900);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.3);
+}
+
+.selectService,
+.serviceOption {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--slate-300);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.selectService:hover,
+.serviceOption:hover {
+  background: var(--slate-800);
+}

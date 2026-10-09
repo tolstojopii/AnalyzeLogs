@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Icon } from "../Icon/Icon";
 import { cx } from "../../utils/cx";
 import s from "./LogStream.module.css";
@@ -43,11 +43,27 @@ export function LogStream({
   onSelectLog,
 }: LogStreamProps) {
   const [levels, setLevels] = useState<LogLevel[]>([]);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [isServiceOpen, setIsServiceOpen] = useState<boolean>(false);
+  const serviceFilterRef = useRef<HTMLDivElement>(null);
+
+  const toggleService = () => {
+    setIsServiceOpen(!isServiceOpen);
+  };
+
+  const services = useMemo(() => {
+    return [...new Set(logs.map((log) => log.service))].sort();
+  }, [logs]);
 
   const toggleLevel = (level: LogLevel) => {
     setLevels((prev) =>
       prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level],
     );
+  };
+
+  const handleSelectService = (service: string | null) => {
+    setSelectedService(service);
+    setIsServiceOpen(false);
   };
 
   const visibleLogs = useMemo(() => {
@@ -56,6 +72,8 @@ export function LogStream({
     return logs.filter((log) => {
       const matchesPeriod = log.timestamp >= threshold;
       const matchesLevel = levels.length === 0 || levels.includes(log.level);
+      const matchesService =
+        selectedService === null || log.service === selectedService;
 
       const matchesSearch =
         query === "" ||
@@ -63,9 +81,9 @@ export function LogStream({
         log.service.toLowerCase().includes(query) ||
         log.trace.toLowerCase().includes(query);
 
-      return matchesLevel && matchesSearch && matchesPeriod;
+      return matchesLevel && matchesSearch && matchesPeriod && matchesService;
     });
-  }, [levels, logs, searchQuery, period]);
+  }, [levels, logs, searchQuery, period, selectedService]);
 
   const handleCopy = async (text: string) => {
     try {
@@ -80,6 +98,16 @@ export function LogStream({
     const filename = `logs-${new Date().toISOString().slice(0, 10)}.json`;
     downloadJSON(visibleLogs, filename);
   };
+
+  useEffect(() => {
+    if (!isServiceOpen) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (serviceFilterRef.current?.contains(e.target as Node)) return;
+      setIsServiceOpen(false);
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [isServiceOpen]);
 
   return (
     <section className={s.panel}>
@@ -99,6 +127,40 @@ export function LogStream({
         </div>
 
         <div className={s.controls}>
+          <div className={s.serviceFilter} ref={serviceFilterRef}>
+            <button
+              type="button"
+              className={s.toggleServiceOpen}
+              onClick={toggleService}
+              aria-label={`Service filter: ${selectedService ?? "All services"}`}
+              aria-expanded={isServiceOpen}
+            >
+              <span>{selectedService ?? "All services"}</span>
+              <Icon name="chevron" size={12} />
+            </button>
+            {isServiceOpen && (
+              <div className={s.serviceDropdown}>
+                <button
+                  type="button"
+                  className={s.selectService}
+                  onClick={() => handleSelectService(null)}
+                >
+                  All services
+                </button>
+                {services.map((svc) => (
+                  <button
+                    key={svc}
+                    type="button"
+                    onClick={() => handleSelectService(svc)}
+                    className={s.serviceOption}
+                  >
+                    {svc}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className={s.tabs}>
             <button
               type="button"
@@ -107,10 +169,8 @@ export function LogStream({
             >
               ALL
             </button>
-
             {LEVELS.map((level) => {
               const isActive = levels.includes(level);
-
               return (
                 <button
                   key={level}
@@ -123,9 +183,11 @@ export function LogStream({
               );
             })}
           </div>
+
           <button type="button" className={s.filterButton} aria-label="Filter">
             <Icon name="filter" />
           </button>
+
           <button
             type="button"
             className={s.filterButton}
