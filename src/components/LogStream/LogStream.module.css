@@ -236,3 +236,20 @@
   font-size: 0.875rem;
   color: var(--slate-500);
 }
+
+.traceCopy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.traceCopy:hover {
+  opacity: 1;
+}

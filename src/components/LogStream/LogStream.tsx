@@ -10,13 +10,13 @@ import {
 } from "../../data/data";
 import { downloadJSON } from "../../utils/download";
 
-
 const LEVELS: readonly LogLevel[] = ["ERROR", "WARN", "INFO", "DEBUG"];
 
 interface LogStreamProps {
   logs: LogEntry[];
   searchQuery: string;
   period: Period;
+  onCopyTrace: (message: string) => void;
 }
 
 function pillClass(level: LogLevel): string {
@@ -34,7 +34,12 @@ function pillClass(level: LogLevel): string {
   }
 }
 
-export function LogStream({ logs, searchQuery, period }: LogStreamProps) {
+export function LogStream({
+  logs,
+  searchQuery,
+  period,
+  onCopyTrace,
+}: LogStreamProps) {
   const [levels, setLevels] = useState<LogLevel[]>([]);
 
   const toggleLevel = (level: LogLevel) => {
@@ -42,7 +47,6 @@ export function LogStream({ logs, searchQuery, period }: LogStreamProps) {
       prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level],
     );
   };
-
 
   const visibleLogs = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -61,11 +65,19 @@ export function LogStream({ logs, searchQuery, period }: LogStreamProps) {
     });
   }, [levels, logs, searchQuery, period]);
 
-  
-  const handleDownload =()=>{
-    const filename = `logs-${new Date().toISOString().slice(0,10)}.json`;
-    downloadJSON(visibleLogs, filename)
-  }
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      onCopyTrace("Copied!");
+    } catch {
+      onCopyTrace("Failed to copy");
+    }
+  };
+
+  const handleDownload = () => {
+    const filename = `logs-${new Date().toISOString().slice(0, 10)}.json`;
+    downloadJSON(visibleLogs, filename);
+  };
 
   return (
     <section className={s.panel}>
@@ -112,8 +124,14 @@ export function LogStream({ logs, searchQuery, period }: LogStreamProps) {
           <button type="button" className={s.filterButton} aria-label="Filter">
             <Icon name="filter" />
           </button>
-          <button type="button" className={s.filterButton} onClick={handleDownload} aria-label="Download logs" disabled={visibleLogs.length === 0}>
-            <Icon name="download"/>
+          <button
+            type="button"
+            className={s.filterButton}
+            onClick={handleDownload}
+            aria-label="Download logs"
+            disabled={visibleLogs.length === 0}
+          >
+            <Icon name="download" />
           </button>
         </div>
       </div>
@@ -139,7 +157,14 @@ export function LogStream({ logs, searchQuery, period }: LogStreamProps) {
                 <span className={s.message}>{log.message}</span>
                 <span className={s.trace}>
                   {log.trace.slice(-6)}
-                  <Icon name="copy" size={12} />
+                  <button
+                    className={s.traceCopy}
+                    type="button"
+                    onClick={() => handleCopy(log.trace)}
+                    aria-label={`Copy trace ${log.trace}`}
+                  >
+                    <Icon name="copy" size={12} />
+                  </button>
                 </span>
               </div>
             ))}

@@ -5,7 +5,7 @@ import { StatCard } from "./components/StatCard/StatCard";
 import { ErrorsChart } from "./components/ErrorsChart/ErrorsChart";
 import { TopErrors } from "./components/TopErrors/TopErrors";
 import { LogStream } from "./components/LogStream/LogStream";
-import { Icon } from "./components/Icon/Icon";
+import { Toast } from "./components/Toast/Toast";
 import { type Period, initialLogs, incomingLogs } from "./data/data";
 import s from "./App.module.css";
 
@@ -14,6 +14,7 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [period, setPeriod] = useState<Period>("24h");
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     const timers = incomingLogs.map((log, index) =>
@@ -89,9 +90,10 @@ export default function App() {
               <TopErrors />
             </section>
 
-            <LogStream logs={logs} searchQuery={searchQuery} period={period} />
+            <LogStream logs={logs} searchQuery={searchQuery} period={period} onCopyTrace={setToast} />
           </div>
         </main>
+        <Toast message={toast} onClose={() => setToast(null)}/>
       </div>
     </div>
   );

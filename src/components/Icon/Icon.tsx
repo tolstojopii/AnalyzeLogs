@@ -1,5 +1,3 @@
-
-
 const paths = {
   activity: <path d="M3 12h4l2.5-7 5 14 2.5-7h4" />,
   alert: (
@@ -48,6 +46,9 @@ const paths = {
       <path d="m20 20-4-4" />
     </>
   ),
+  check: (
+    <path d="m5 12 5 5L20 7" />
+  ),
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />
@@ -65,8 +66,7 @@ interface IconProps {
   className?: string;
 }
 
-
-export function Icon ({ name, size = 16, className}: IconProps){
+export function Icon({ name, size = 16, className }: IconProps) {
   return (
     <svg
       aria-hidden="true"
@@ -84,6 +84,5 @@ export function Icon ({ name, size = 16, className}: IconProps){
     </svg>
   );
 }
-
 
 export type IconName = keyof typeof paths;
