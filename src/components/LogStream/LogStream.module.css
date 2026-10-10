@@ -1,6 +1,5 @@
 .panel {
   margin-top: 1rem;
-  overflow: hidden;
   border: 1px solid var(--slate-800);
   border-radius: 1rem;
   background: rgb(15 23 42 / 0.5);
@@ -255,9 +254,8 @@
   opacity: 1;
 }
 
-
 .serviceFilter {
-  position: relative;   
+  position: relative;
 }
 
 .toggleServiceOpen {
@@ -272,7 +270,9 @@
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .toggleServiceOpen:hover {
@@ -282,17 +282,15 @@
 
 .serviceDropdown {
   position: absolute;
-  top: calc(100% + 4px);       
-  left: 0;                     
+  top: calc(100% + 4px);
+  left: 0;
   z-index: 100;
   min-width: 200px;
   max-height: 300px;
   overflow-y: auto;
-
   display: flex;
   flex-direction: column;
   padding: 0.25rem;
-
   border: 1px solid var(--slate-800);
   border-radius: 0.75rem;
   background: var(--slate-900);
@@ -316,4 +314,28 @@
 .selectService:hover,
 .serviceOption:hover {
   background: var(--slate-800);
+}
+
+.serviceSearch {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+  border: 1px solid var(--slate-800);
+  border-radius: 0.5rem;
+  background: rgb(2 6 23 / 0.6);
+  color: var(--slate-100);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.serviceSearch:focus {
+  border-color: var(--slate-600);
+}
+
+.serviceEmpty {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--slate-500);
 }

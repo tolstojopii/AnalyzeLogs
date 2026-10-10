@@ -45,10 +45,16 @@ export function LogStream({
   const [levels, setLevels] = useState<LogLevel[]>([]);
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [isServiceOpen, setIsServiceOpen] = useState<boolean>(false);
+  const [serviceQuery, setServiceQuery] = useState("");
+
   const serviceFilterRef = useRef<HTMLDivElement>(null);
+  const serviceSearchRef = useRef<HTMLInputElement>(null);
 
   const toggleService = () => {
-    setIsServiceOpen(!isServiceOpen);
+    setIsServiceOpen((prev) =>{
+      if (prev) setServiceQuery("");
+      return !prev;
+    });
   };
 
   const services = useMemo(() => {
@@ -64,7 +70,14 @@ export function LogStream({
   const handleSelectService = (service: string | null) => {
     setSelectedService(service);
     setIsServiceOpen(false);
+    setServiceQuery("");
   };
+
+  const filteredServices = useMemo(() => {
+    const q = serviceQuery.trim().toLowerCase();
+    if (q === "") return services;
+    return services.filter((svc) => svc.toLowerCase().includes(q));
+  }, [services, serviceQuery]);
 
   const visibleLogs = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -94,6 +107,18 @@ export function LogStream({
     }
   };
 
+  useEffect(() => {
+    if (!isServiceOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsServiceOpen(false);
+        setServiceQuery("");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isServiceOpen]);
+
   const handleDownload = () => {
     const filename = `logs-${new Date().toISOString().slice(0, 10)}.json`;
     downloadJSON(visibleLogs, filename);
@@ -104,9 +129,16 @@ export function LogStream({
     const onClickOutside = (e: MouseEvent) => {
       if (serviceFilterRef.current?.contains(e.target as Node)) return;
       setIsServiceOpen(false);
+      setServiceQuery("");
     };
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [isServiceOpen]);
+
+  useEffect(() => {
+    if (isServiceOpen) {
+      serviceSearchRef.current?.focus();
+    }
   }, [isServiceOpen]);
 
   return (
@@ -140,6 +172,15 @@ export function LogStream({
             </button>
             {isServiceOpen && (
               <div className={s.serviceDropdown}>
+                <input
+                  type="text"
+                  ref={serviceSearchRef}
+                  className={s.serviceSearch}
+                  placeholder="Seacrh service..."
+                  value={serviceQuery}
+                  onChange={(e) => setServiceQuery(e.target.value)}
+                  aria-label="Search service"
+                />
                 <button
                   type="button"
                   className={s.selectService}
@@ -147,7 +188,7 @@ export function LogStream({
                 >
                   All services
                 </button>
-                {services.map((svc) => (
+                {filteredServices.map((svc) => (
                   <button
                     key={svc}
                     type="button"
@@ -157,6 +198,9 @@ export function LogStream({
                     {svc}
                   </button>
                 ))}
+                {filteredServices.length === 0 && (
+                  <div className={s.serviceEmpty}>No services found</div>
+                )}
               </div>
             )}
           </div>
