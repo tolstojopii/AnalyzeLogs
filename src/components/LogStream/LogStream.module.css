@@ -235,6 +235,31 @@
   text-align: center;
   font-size: 0.875rem;
   color: var(--slate-500);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.emptyText {
+  margin: 0;
+}
+
+.emptyButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--slate-700);
+  border-radius: 0.75rem;
+  background: rgb(30 41 59 / 0.6);
+  color: var(--slate-200);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.emptyButton:hover {
+  background: var(--slate-700);
+  border-color: var(--slate-600);
 }
 
 .traceCopy {
@@ -338,4 +363,10 @@
   text-align: center;
   font-size: 0.8125rem;
   color: var(--slate-500);
+}
+
+
+.serviceOptionActive {
+  background: var(--slate-800);
+  color: var(--slate-100);
 }

@@ -18,6 +18,7 @@ interface LogStreamProps {
   period: Period;
   onCopyTrace: (message: string) => void;
   onSelectLog: (log: LogEntry) => void;
+  onResetAppFilters: () => void;
 }
 
 function pillClass(level: LogLevel): string {
@@ -41,17 +42,26 @@ export function LogStream({
   period,
   onCopyTrace,
   onSelectLog,
+  onResetAppFilters,
 }: LogStreamProps) {
   const [levels, setLevels] = useState<LogLevel[]>([]);
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [isServiceOpen, setIsServiceOpen] = useState<boolean>(false);
   const [serviceQuery, setServiceQuery] = useState("");
-
+  const [activeIndex, setActiveIndex] = useState(-1);
   const serviceFilterRef = useRef<HTMLDivElement>(null);
   const serviceSearchRef = useRef<HTMLInputElement>(null);
 
+  const handleResetAll = () => {
+    setLevels([]);
+    setSelectedService(null);
+    setServiceQuery("");
+    setActiveIndex(-1);
+    onResetAppFilters();
+  };
+
   const toggleService = () => {
-    setIsServiceOpen((prev) =>{
+    setIsServiceOpen((prev) => {
       if (prev) setServiceQuery("");
       return !prev;
     });
@@ -71,6 +81,27 @@ export function LogStream({
     setSelectedService(service);
     setIsServiceOpen(false);
     setServiceQuery("");
+    setActiveIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) =>
+        prev < filteredServices.length - 1 ? prev + 1 : prev,
+      );
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev > 0 ? prev - 1 : prev));
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIndex >= 0 && activeIndex < filteredServices.length) {
+        handleSelectService(filteredServices[activeIndex]);
+      }
+    }
   };
 
   const filteredServices = useMemo(() => {
@@ -113,6 +144,7 @@ export function LogStream({
       if (e.key === "Escape") {
         setIsServiceOpen(false);
         setServiceQuery("");
+        setActiveIndex(-1);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -130,6 +162,7 @@ export function LogStream({
       if (serviceFilterRef.current?.contains(e.target as Node)) return;
       setIsServiceOpen(false);
       setServiceQuery("");
+      setActiveIndex(-1);
     };
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
@@ -140,6 +173,14 @@ export function LogStream({
       serviceSearchRef.current?.focus();
     }
   }, [isServiceOpen]);
+
+  useEffect(() => {
+    if (activeIndex < 0) return;
+    const dropdown = serviceFilterRef.current?.querySelector(
+      `.${s.serviceOption}:nth-of-type(${activeIndex + 1})`,
+    );
+    dropdown?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
 
   return (
     <section className={s.panel}>
@@ -178,7 +219,11 @@ export function LogStream({
                   className={s.serviceSearch}
                   placeholder="Seacrh service..."
                   value={serviceQuery}
-                  onChange={(e) => setServiceQuery(e.target.value)}
+                  onChange={(e) => {
+                    setServiceQuery(e.target.value);
+                    setActiveIndex(-1);
+                  }}
+                  onKeyDown={handleKeyDown}
                   aria-label="Search service"
                 />
                 <button
@@ -188,12 +233,15 @@ export function LogStream({
                 >
                   All services
                 </button>
-                {filteredServices.map((svc) => (
+                {filteredServices.map((svc, index) => (
                   <button
                     key={svc}
                     type="button"
                     onClick={() => handleSelectService(svc)}
-                    className={s.serviceOption}
+                    className={cx(
+                      s.serviceOption,
+                      index === activeIndex && s.serviceOptionActive,
+                    )}
                   >
                     {svc}
                   </button>
@@ -293,8 +341,11 @@ export function LogStream({
             ))}
             {visibleLogs.length === 0 && (
               <div className={s.empty}>
-                No logs match your filters. Try a different period or clear the
-                search
+                <p className={s.emptyText}>
+                  No logs match your filters. Try a different period or clear
+                  the search
+                </p>
+                <button className={s.emptyButton} onClick={handleResetAll}>Reset filters</button>
               </div>
             )}
           </div>

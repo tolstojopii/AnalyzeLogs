@@ -18,6 +18,12 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
+
+  const handleResetAppFilters = () => {
+    setSearchQuery("");
+    setPeriod("24h");
+  }
+
   useEffect(() => {
     const timers = incomingLogs.map((log, index) =>
       window.setTimeout(
@@ -107,6 +113,7 @@ export default function App() {
               period={period}
               onCopyTrace={setToast}
               onSelectLog={setSelectedLog}
+              onResetAppFilters={handleResetAppFilters}
             />
           </div>
         </main>
