@@ -9,6 +9,9 @@ import {
   PERIOD_MS,
 } from "../../data/data";
 import { downloadJSON } from "../../utils/download";
+import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
+import { useEscapeKey } from "../../hooks/useEscapeKey";
+import { useClickOutside } from "../../hooks/useClickOutside";
 
 const LEVELS: readonly LogLevel[] = ["ERROR", "WARN", "INFO", "DEBUG"];
 
@@ -129,44 +132,24 @@ export function LogStream({
     });
   }, [levels, logs, searchQuery, period, selectedService]);
 
-  const handleCopy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      onCopyTrace("Copied!");
-    } catch {
-      onCopyTrace("Failed to copy");
-    }
-  };
+  const copy = useCopyToClipboard(onCopyTrace);
 
-  useEffect(() => {
-    if (!isServiceOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsServiceOpen(false);
-        setServiceQuery("");
-        setActiveIndex(-1);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isServiceOpen]);
+  useEscapeKey(isServiceOpen, () => {
+    setIsServiceOpen(false);
+    setServiceQuery("");
+    setActiveIndex(-1);
+  });
 
   const handleDownload = () => {
     const filename = `logs-${new Date().toISOString().slice(0, 10)}.json`;
     downloadJSON(visibleLogs, filename);
   };
 
-  useEffect(() => {
-    if (!isServiceOpen) return;
-    const onClickOutside = (e: MouseEvent) => {
-      if (serviceFilterRef.current?.contains(e.target as Node)) return;
-      setIsServiceOpen(false);
-      setServiceQuery("");
-      setActiveIndex(-1);
-    };
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [isServiceOpen]);
+  useClickOutside(isServiceOpen, serviceFilterRef, () => {
+    setIsServiceOpen(false);
+    setServiceQuery("");
+    setActiveIndex(-1);
+  });
 
   useEffect(() => {
     if (isServiceOpen) {
@@ -276,10 +259,6 @@ export function LogStream({
             })}
           </div>
 
-          <button type="button" className={s.filterButton} aria-label="Filter">
-            <Icon name="filter" />
-          </button>
-
           <button
             type="button"
             className={s.filterButton}
@@ -330,7 +309,7 @@ export function LogStream({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCopy(log.trace);
+                      copy(log.trace);
                     }}
                     aria-label={`Copy trace ${log.trace}`}
                   >
@@ -345,7 +324,9 @@ export function LogStream({
                   No logs match your filters. Try a different period or clear
                   the search
                 </p>
-                <button className={s.emptyButton} onClick={handleResetAll}>Reset filters</button>
+                <button className={s.emptyButton} onClick={handleResetAll}>
+                  Reset filters
+                </button>
               </div>
             )}
           </div>

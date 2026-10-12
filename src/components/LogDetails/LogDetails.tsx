@@ -1,4 +1,5 @@
 import { LogEntry } from "../../data/data";
+import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import { Icon } from "../Icon/Icon";
 import s from "./LogDetails.module.css";
 
@@ -9,14 +10,7 @@ interface LogDetailsProps {
 }
 
 export function LogDetails({ log, onClose, onCopyTrace }: LogDetailsProps) {
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(log.trace);
-      onCopyTrace("Copied!");
-    } catch {
-      onCopyTrace("Failed to copy");
-    }
-  };
+  const copy = useCopyToClipboard(onCopyTrace)
   return (
     <>
       <div className={s.overlay} onClick={onClose} aria-hidden="true" />
@@ -58,7 +52,7 @@ export function LogDetails({ log, onClose, onCopyTrace }: LogDetailsProps) {
                 <button
                   type="button"
                   className={s.copyButton}
-                  onClick={handleCopy}
+                  onClick={()=>copy(log.trace)}
                   aria-label={`Copy trace ${log.trace}`}
                 >
                   <Icon name="copy" size={12} />

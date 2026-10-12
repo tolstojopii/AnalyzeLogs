@@ -9,6 +9,7 @@ import { Toast } from "./components/Toast/Toast";
 import { type Period, initialLogs, incomingLogs, type LogEntry } from "./data/data";
 import s from "./App.module.css";
 import { LogDetails } from "./components/LogDetails/LogDetails";
+import { useEscapeKey } from "./hooks/useEscapeKey";
 
 export default function App() {
   const [logs, setLogs] = useState(initialLogs);
@@ -37,23 +38,8 @@ export default function App() {
     return () => timers.forEach(window.clearTimeout);
   }, []);
 
-  useEffect(() => {
-    if (!selectedLog) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedLog(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [selectedLog]);
-
-  useEffect(() => {
-    if (!isSidebarOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsSidebarOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isSidebarOpen]);
+  useEscapeKey(selectedLog !== null, ()=> setSelectedLog(null));
+  useEscapeKey(isSidebarOpen, ()=>setIsSidebarOpen(false));
 
   return (
     <div className={s.page}>
