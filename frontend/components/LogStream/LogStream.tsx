@@ -143,7 +143,8 @@ export function LogStream({
   const handleDownload = () => {
     const filename = `logs-${new Date().toISOString().slice(0, 10)}.json`;
     downloadJSON(visibleLogs, filename);
-  };
+  }
+  
 
   useClickOutside(isServiceOpen, serviceFilterRef, () => {
     setIsServiceOpen(false);
