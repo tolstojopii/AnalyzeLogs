@@ -9,22 +9,17 @@ import {
 import { ListLogsQuerySchema } from "../schemas/logs";
 
 /**
- * Роуты для работы с логами.
- *
- * Сейчас: POST /logs — приём (ingest).
- * Позже: GET /logs — чтение с фильтрами, GET /logs/stream — real-time.
+ * роуты для работы с логами.
  */
 export const logsRoutes: FastifyPluginAsync = async (app) => {
   app.post("/logs", async (req, reply) => {
-    // 1) Аутентификация. Ingest — привилегированная операция (запись в БД),
-    //    поэтому защищаем её общим ключом из env. Клиент шлёт x-api-key.
+    
     const apiKey = req.headers["x-api-key"];
     if (apiKey !== config.INGEST_API_KEY) {
       return reply.code(401).send({ error: "Invalid or missing API key" });
     }
 
-    // 2) Валидация тела через Zod. safeParse не бросает исключение —
-    //    позволяем вернуть понятную 400 с деталями.
+    // 2) валидация тела через Zod. safeParse не бросает исключение
     const parsed = IngestBatchSchema.safeParse(req.body);
     if (!parsed.success) {
       return reply.code(400).send({
@@ -33,10 +28,10 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
       });
     }
 
-    // 3) Работа с БД — делегируем в repository.
+    
     const inserted = await logsRepository.insertMany(parsed.data.logs);
 
-    // 4) Ответ. 202 Accepted логичен для приёма пачки событий.
+    
     return reply.code(202).send({ accepted: inserted });
   });
   app.get("/logs", async (req, reply) => {
@@ -47,8 +42,12 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
         details: parsed.error.flatten(),
       });
     }
-    const found = await logsRepository.findMany(parsed.data);
-    return reply.code(200).send({ logs: found });
+    const rows = await logsRepository.findMany(parsed.data)
+    const hasMore = rows.length > parsed.data.limit
+    const logs = hasMore ? rows.slice(0, parsed.data.limit) : rows
+    const nextCursor = hasMore ? logs[logs.length - 1].id : null;
+    
+    return reply.code(200).send({ logs, nextCursor });
   });
 
   app.get("/logs/stats/over-time", async (req, reply) => {

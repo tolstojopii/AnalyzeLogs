@@ -14,30 +14,44 @@ import { fetchErrorsOverTime, fetchLogs, fetchTopErrors } from "./api/logs";
 
 export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [period, setPeriod] = useState<Period>("24h");
   const [toast, setToast] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
-  const [errorPoints, setErrorPoints] = useState<ErrorPoint[]>([])
-  const [topErrors, setTopErrors] = useState<TopError[]>([])
+  const [errorPoints, setErrorPoints] = useState<ErrorPoint[]>([]);
+  const [topErrors, setTopErrors] = useState<TopError[]>([]);
 
   const handleResetAppFilters = () => {
     setSearchQuery("");
     setPeriod("24h");
   };
 
-  useEffect(()=>{
+    async function loadMore() {
+      if (nextCursor === null) return;
+      try {
+        const { logs: newLogs, nextCursor: cursor } = await fetchLogs({
+          before: nextCursor,
+        });
+        setLogs((prev) => [...prev, ...newLogs]);
+        setNextCursor(cursor);
+      } catch (err) {
+        console.error("Не удалось загрузить логи", err);
+      }
+    }
+
+  useEffect(() => {
     async function load() {
-      try{
+      try {
         const data = await fetchErrorsOverTime();
-        setErrorPoints(data)
-      }catch(err){
+        setErrorPoints(data);
+      } catch (err) {
         console.error("Не удалось загрузить точки графика:", err);
       }
     }
     load();
-  }, [])
+  }, []);
 
   useEffect(() => {
     console.log("useEffect СТАРТОВАЛ");
@@ -45,7 +59,8 @@ export default function App() {
       try {
         const data = await fetchLogs();
         console.log("пришло из fetchlogs:", data);
-        setLogs(data);
+        setLogs(data.logs);
+        setNextCursor(data.nextCursor);
       } catch (err) {
         console.error("Не удалось загрузить логи:", err);
       }
@@ -53,17 +68,17 @@ export default function App() {
     load();
   }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     async function load() {
-      try{
+      try {
         const data = await fetchTopErrors();
-        setTopErrors(data)
-      }catch(err){
+        setTopErrors(data);
+      } catch (err) {
         console.error("Не удалось загрузить топ ошибок:", err);
       }
     }
     load();
-  }, [])
+  }, []);
 
   useEscapeKey(selectedLog !== null, () => setSelectedLog(null));
   useEscapeKey(isSidebarOpen, () => setIsSidebarOpen(false));
@@ -116,8 +131,8 @@ export default function App() {
             <StatCard />
 
             <section className={s.charts}>
-              <ErrorsChart points={errorPoints}/>
-              <TopErrors errors={topErrors}/>
+              <ErrorsChart points={errorPoints} />
+              <TopErrors errors={topErrors} />
             </section>
 
             <LogStream
@@ -127,6 +142,7 @@ export default function App() {
               onCopyTrace={setToast}
               onSelectLog={setSelectedLog}
               onResetAppFilters={handleResetAppFilters}
+              onLoadMore={loadMore}
             />
           </div>
         </main>
