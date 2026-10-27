@@ -1,7 +1,8 @@
-import { topErrors } from "../../data/data";
+
+import { TopError } from "../../data/data";
 import s from "./TopErrors.module.css";
 
-export function TopErrors() {
+export function TopErrors({errors}:{errors: TopError[]}) {
   return (
     <div className={s.panel}>
       <div className={s.head}>
@@ -12,7 +13,7 @@ export function TopErrors() {
         <p className={s.total}>94 total</p>
       </div>
       <div className={s.list}>
-        {topErrors.map((error, index) => (
+        {errors.map((error, index) => (
           <div key={error.label} className={s.item}>
             <span className={s.index}>{String(index + 1).padStart(2, "0")}</span>
             <div className={s.body}>

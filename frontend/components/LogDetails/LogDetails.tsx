@@ -1,5 +1,6 @@
 import { LogEntry } from "../../data/data";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
+import { formatTime } from "../../utils/formatTime";
 import { Icon } from "../Icon/Icon";
 import s from "./LogDetails.module.css";
 
@@ -34,7 +35,7 @@ export function LogDetails({ log, onClose, onCopyTrace }: LogDetailsProps) {
         <div className={s.body}>
           <div className={s.field}>
             <span className={s.label}>Time</span>
-            <span className={s.value}>{log.time}</span>
+            <span className={s.value}>{formatTime(log.timestamp)}</span>
           </div>
           <div className={s.field}>
             <span className={s.label}>Level</span>

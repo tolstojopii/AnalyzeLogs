@@ -4,15 +4,15 @@ export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG";
 export type Period = "1h" | "6h" | "24h" | "7d";
 
 export const PERIOD_MS: Record<Period, number> = {
-  "1h":  1 * 60 * 60 * 1000,
-  "6h":  6 * 60 * 60 * 1000,
+  "1h": 1 * 60 * 60 * 1000,
+  "6h": 6 * 60 * 60 * 1000,
   "24h": 24 * 60 * 60 * 1000,
-  "7d":  7 * 24 * 60 * 60 * 1000,
+  "7d": 7 * 24 * 60 * 60 * 1000,
 };
 
 export interface LogEntry {
   timestamp: number;
-  time: string;
+  id: string;
   level: LogLevel;
   service: string;
   message: string;
@@ -41,40 +41,40 @@ export interface ErrorPoint {
 
 export const initialLogs: LogEntry[] = [
   {
-    timestamp: Date.now() - 5 * 60 * 1000, 
-    time: "14:42:18.904",
+    id: "log-1",
+    timestamp: Date.now() - 5 * 60 * 1000,
     level: "ERROR",
     service: "payment-api",
     message: "Connection pool exhausted after 30000ms",
     trace: "req_8f31a",
   },
   {
-    timestamp: Date.now() - 2 * 60 * 60 * 1000, 
-    time: "14:42:16.217",
+    timestamp: Date.now() - 2 * 60 * 60 * 1000,
+    id: "log-2",
     level: "WARN",
     service: "auth-service",
     message: "Rate limit approaching for client 10.0.4.21",
     trace: "req_8f319",
   },
   {
-    timestamp: Date.now() - 20 * 60 * 1000, 
-    time: "16:21:54.547",
+    timestamp: Date.now() - 20 * 60 * 1000,
+    id: "log-3",
     level: "DEBUG",
     service: "reg-service",
     message: "Some error",
     trace: "req_9c381a",
   },
   {
-    timestamp: Date.now() - 3 * 60 * 60 * 1000, 
-    time: "14:42:13.041",
+    timestamp: Date.now() - 3 * 60 * 60 * 1000,
+    id: "log-4",
     level: "INFO",
     service: "edge-router",
     message: "Request completed in 84ms · GET /v2/health",
     trace: "req_8f318",
   },
   {
-    timestamp: Date.now() - 6 * 60 * 60 * 1000, 
-    time: "14:42:08.653",
+    timestamp: Date.now() - 6 * 60 * 60 * 1000,
+    id: "log-5",
     level: "ERROR",
     service: "worker-sync",
     message: "Failed to process queue message: invalid payload",
@@ -82,7 +82,7 @@ export const initialLogs: LogEntry[] = [
   },
   {
     timestamp: Date.now() - 5 * 60 * 60 * 1000,
-    time: "14:42:02.190",
+    id: "log-6",
     level: "INFO",
     service: "user-service",
     message: "Profile cache refreshed successfully",
@@ -90,7 +90,7 @@ export const initialLogs: LogEntry[] = [
   },
   {
     timestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
-    time: "14:41:58.772",
+    id: "log-7",
     level: "WARN",
     service: "database",
     message: "Slow query detected · duration 1247ms",
@@ -101,23 +101,23 @@ export const initialLogs: LogEntry[] = [
 export const incomingLogs: LogEntry[] = [
   {
     timestamp: Date.now() - 30 * 1000,
-    time: "14:42:22.106",
+    id: "log-incoming-1",
     level: "INFO",
     service: "edge-router",
     message: "Request completed in 62ms · POST /v2/events",
     trace: "req_8f31b",
   },
   {
-    timestamp: Date.now() -  15 * 1000,
-    time: "14:42:25.448",
+    timestamp: Date.now() - 15 * 1000,
+    id: "log-incoming-2",
     level: "WARN",
     service: "cache-primary",
     message: "Memory usage above configured threshold · 82%",
     trace: "req_8f31c",
   },
   {
-    timestamp: Date.now() - 45 * 1000,
-    time: "14:42:29.813",
+    timestamp: Date.now() - 10 * 1000,
+    id: "log-incoming-3",
     level: "ERROR",
     service: "payment-api",
     message: "Upstream request failed with status 503",

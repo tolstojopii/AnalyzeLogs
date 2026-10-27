@@ -12,6 +12,7 @@ import { downloadJSON } from "../../utils/download";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import { useEscapeKey } from "../../hooks/useEscapeKey";
 import { useClickOutside } from "../../hooks/useClickOutside";
+import { formatTime } from "../../utils/formatTime";
 
 const LEVELS: readonly LogLevel[] = ["ERROR", "WARN", "INFO", "DEBUG"];
 
@@ -143,8 +144,7 @@ export function LogStream({
   const handleDownload = () => {
     const filename = `logs-${new Date().toISOString().slice(0, 10)}.json`;
     downloadJSON(visibleLogs, filename);
-  }
-  
+  };
 
   useClickOutside(isServiceOpen, serviceFilterRef, () => {
     setIsServiceOpen(false);
@@ -285,7 +285,7 @@ export function LogStream({
           <div>
             {visibleLogs.map((log) => (
               <div
-                key={`${log.time}-${log.trace}`}
+                key={log.id}
                 className={s.row}
                 onClick={() => onSelectLog(log)}
                 role="button"
@@ -297,7 +297,7 @@ export function LogStream({
                   }
                 }}
               >
-                <span className={s.time}>{log.time}</span>
+                <span className={s.time}>{formatTime(log.timestamp)}</span>
                 <span>
                   <span className={pillClass(log.level)}>{log.level}</span>
                 </span>

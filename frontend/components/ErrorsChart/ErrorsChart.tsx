@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { errorsOverTime, type ErrorPoint } from "../../data/data";
+import { type ErrorPoint } from "../../data/data";
 import s from "./ErrorsChart.module.css";
 
 const WIDTH = 720;
@@ -19,17 +19,15 @@ function buildPoints(data: ErrorPoint[]): Point[] {
 }
 
 function buildLinePath(points: Point[]): string {
-  return points
-    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`)
-    .join(" ");
+  return points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
 }
 
-export function ErrorsChart() {
+export function ErrorsChart({ points }: { points: ErrorPoint[] }) {
   const gradientId = useId();
 
-  const maxErrors = Math.max(...errorsOverTime.map((p) => p.errors));
-  const points = buildPoints(errorsOverTime);
-  const linePath = buildLinePath(points);
+  const maxErrors = Math.max(...points.map((p) => p.errors));
+  const plotPoints = buildPoints(points);
+  const linePath = buildLinePath(plotPoints);
   const areaPath = `${linePath} L${WIDTH} ${HEIGHT} L0 ${HEIGHT} Z`;
 
   return (
@@ -62,11 +60,23 @@ export function ErrorsChart() {
           <div className={`${s.gridLine} ${s.lineBottom}`} />
 
           <div className={s.area}>
-            <svg className={s.svg} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none">
+            <svg
+              className={s.svg}
+              viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+              preserveAspectRatio="none"
+            >
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="currentColor" stopOpacity=".28" />
-                  <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+                  <stop
+                    offset="0%"
+                    stopColor="currentColor"
+                    stopOpacity=".28"
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="currentColor"
+                    stopOpacity="0"
+                  />
                 </linearGradient>
               </defs>
 
@@ -82,7 +92,7 @@ export function ErrorsChart() {
           </div>
 
           <div className={s.labels}>
-            {errorsOverTime.map((point) => (
+            {points.map((point) => (
               <span key={point.hour}>{point.hour}</span>
             ))}
           </div>
