@@ -23,6 +23,8 @@ interface LogStreamProps {
   onCopyTrace: (message: string) => void;
   onSelectLog: (log: LogEntry) => void;
   onResetAppFilters: () => void;
+  onLoadMore: () => void;
+  hasMore: boolean;
 }
 
 function pillClass(level: LogLevel): string {
@@ -47,6 +49,8 @@ export function LogStream({
   onCopyTrace,
   onSelectLog,
   onResetAppFilters,
+  onLoadMore,
+  hasMore,
 }: LogStreamProps) {
   const [levels, setLevels] = useState<LogLevel[]>([]);
   const [selectedService, setSelectedService] = useState<string | null>(null);
@@ -282,7 +286,7 @@ export function LogStream({
             <span>Trace</span>
           </div>
 
-          <div>
+          <div className={s.logs}>
             {visibleLogs.map((log) => (
               <div
                 key={log.id}
@@ -319,7 +323,13 @@ export function LogStream({
                 </span>
               </div>
             ))}
-            {visibleLogs.length === 0 && (
+            {hasMore && visibleLogs.length !== 0 && (
+              <button className={s.moreLogs} onClick={() => onLoadMore()}>
+                More logs
+              </button>
+            )}
+            
+            {visibleLogs.length === 0  && (
               <div className={s.empty}>
                 <p className={s.emptyText}>
                   No logs match your filters. Try a different period or clear

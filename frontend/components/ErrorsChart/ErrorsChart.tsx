@@ -13,8 +13,8 @@ interface Point {
 function buildPoints(data: ErrorPoint[]): Point[] {
   const maxErrors = Math.max(...data.map((p) => p.errors));
   return data.map((point, i) => ({
-    x: (i / (data.length - 1)) * WIDTH,
-    y: HEIGHT - (point.errors / maxErrors) * HEIGHT,
+    x: (i / Math.max(data.length - 1, 1)) * WIDTH,
+    y: HEIGHT - (point.errors / (maxErrors || 1)) * HEIGHT,
   }));
 }
 
@@ -24,7 +24,18 @@ function buildLinePath(points: Point[]): string {
 
 export function ErrorsChart({ points }: { points: ErrorPoint[] }) {
   const gradientId = useId();
-
+  if (points.length === 0)
+    return (
+      <div className={`${s.panel} ${s.wide}`}>
+        <div className={s.head}>
+          <p className={s.title}>Errors over time</p>
+          <p className={s.subtitle}>Error volume in the last 24 hours</p>
+        </div>
+        <div className={s.subtitle}>
+          <p>No data for this period</p>
+        </div>
+      </div>
+    );
   const maxErrors = Math.max(...points.map((p) => p.errors));
   const plotPoints = buildPoints(points);
   const linePath = buildLinePath(plotPoints);

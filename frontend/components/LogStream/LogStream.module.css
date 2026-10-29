@@ -130,6 +130,7 @@
 }
 .table {
   min-width: 56rem;
+  
 }
 
 .tableHead,
@@ -254,12 +255,36 @@
   color: var(--slate-200);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
 }
 
 .emptyButton:hover {
   background: var(--slate-700);
   border-color: var(--slate-600);
+}
+
+.logs{
+  display: flex;
+  flex-direction: column;
+}
+
+.moreLogs {
+  padding: 0.5rem 1rem;
+  max-width: 100px;
+  justify-self: center;
+  align-self: center;
+  border: 1px solid var(--slate-700);
+  border-radius: 0.75rem;
+  background: rgb(30 41 59 / 0.6);
+  color: var(--slate-200);
+  font-size: 0.875rem;
+  cursor: pointer;
+  
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
 }
 
 .traceCopy {
@@ -364,7 +389,6 @@
   font-size: 0.8125rem;
   color: var(--slate-500);
 }
-
 
 .serviceOptionActive {
   background: var(--slate-800);

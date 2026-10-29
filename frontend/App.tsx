@@ -6,7 +6,7 @@ import { ErrorsChart } from "./components/ErrorsChart/ErrorsChart";
 import { TopErrors } from "./components/TopErrors/TopErrors";
 import { LogStream } from "./components/LogStream/LogStream";
 import { Toast } from "./components/Toast/Toast";
-import { type Period, type LogEntry, ErrorPoint, TopError } from "./data/data";
+import { type Period, type LogEntry, ErrorPoint, TopError, PERIOD_MS } from "./data/data";
 import s from "./App.module.css";
 import { LogDetails } from "./components/LogDetails/LogDetails";
 import { useEscapeKey } from "./hooks/useEscapeKey";
@@ -28,56 +28,61 @@ export default function App() {
     setPeriod("24h");
   };
 
-    async function loadMore() {
-      if (nextCursor === null) return;
-      try {
-        const { logs: newLogs, nextCursor: cursor } = await fetchLogs({
-          before: nextCursor,
-        });
-        setLogs((prev) => [...prev, ...newLogs]);
-        setNextCursor(cursor);
-      } catch (err) {
-        console.error("Не удалось загрузить логи", err);
-      }
+  async function loadMore() {
+    if (nextCursor === null) return;
+    const date = new Date(Date.now() - PERIOD_MS[period]).toISOString()
+    try {
+      const { logs: newLogs, nextCursor: cursor } = await fetchLogs({
+        before: nextCursor, since: date,
+      });
+      setLogs((prev) => [...prev, ...newLogs]);
+      setNextCursor(cursor);
+    } catch (err) {
+      console.error("Не удалось загрузить логи", err);
     }
+  }
 
   useEffect(() => {
-    async function load() {
+    async function loadLogs() {
+      const date = new Date(Date.now() - PERIOD_MS[period]).toISOString()
+      setLogs([])
+      setNextCursor(null)
       try {
-        const data = await fetchErrorsOverTime();
-        setErrorPoints(data);
-      } catch (err) {
-        console.error("Не удалось загрузить точки графика:", err);
-      }
-    }
-    load();
-  }, []);
-
-  useEffect(() => {
-    console.log("useEffect СТАРТОВАЛ");
-    async function load() {
-      try {
-        const data = await fetchLogs();
-        console.log("пришло из fetchlogs:", data);
+        const data = await fetchLogs({since: date});
         setLogs(data.logs);
         setNextCursor(data.nextCursor);
+        
       } catch (err) {
         console.error("Не удалось загрузить логи:", err);
       }
     }
-    load();
-  }, []);
+    loadLogs();
+  }, [period]);
 
   useEffect(() => {
-    async function load() {
+    async function loadTopErrors() {
       try {
         const data = await fetchTopErrors();
         setTopErrors(data);
+        
       } catch (err) {
         console.error("Не удалось загрузить топ ошибок:", err);
       }
     }
-    load();
+    loadTopErrors();
+  }, []);
+
+  useEffect(() => {
+    async function loadErrorPoint() {
+      try {
+        const data = await fetchErrorsOverTime();
+        setErrorPoints(data);
+        
+      } catch (err) {
+        console.error("Не удалось загрузить точки графика:", err);
+      }
+    }
+    loadErrorPoint();
   }, []);
 
   useEscapeKey(selectedLog !== null, () => setSelectedLog(null));
@@ -143,6 +148,7 @@ export default function App() {
               onSelectLog={setSelectedLog}
               onResetAppFilters={handleResetAppFilters}
               onLoadMore={loadMore}
+              hasMore={nextCursor !== null}
             />
           </div>
         </main>

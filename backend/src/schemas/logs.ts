@@ -21,7 +21,7 @@ export const ListLogsQuerySchema = z.object({
   level: LogLevelSchema.optional(),
   service: z.string().optional(),
   since: z.coerce.date().optional(),
-  limit: z.coerce.number().int().positive().max(1000).default(100)
+  limit: z.coerce.number().int().positive().max(1000).default(5)
 })
 
 export const ErrorsOverTimeQuerySchema = z.object({
