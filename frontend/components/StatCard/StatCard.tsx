@@ -1,5 +1,5 @@
 import { Icon } from "../Icon/Icon";
-import { statCards } from "../../data/data";
+import { statCards} from "../../data/data";
 import { cx } from "../../utils/cx";
 import s from "./StatCard.module.css";
 

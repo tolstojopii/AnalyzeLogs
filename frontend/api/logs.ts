@@ -17,6 +17,7 @@ interface BackendErrorPoint {
 interface BackendTopError {
   message: string;
   count: string;
+  service: string;
 }
 
 function mapLog(raw: BackendLog): LogEntry {
@@ -44,7 +45,7 @@ function mapTopError(raw: BackendTopError, maxCount: number): TopError {
   return {
     label: raw.message,
     count,
-    service: "",
+    service: raw.service,
     width: maxCount > 0 ? Math.round((count / maxCount) * 100) : 0,
   };
 }
