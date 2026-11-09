@@ -16,7 +16,12 @@ import {
 import s from "./App.module.css";
 import { LogDetails } from "./components/LogDetails/LogDetails";
 import { useEscapeKey } from "./hooks/useEscapeKey";
-import { fetchErrorsOverTime, fetchLogs, fetchTopErrors } from "./api/logs";
+import {
+  fetchErrorsOverTime,
+  fetchLogs,
+  fetchTopErrors,
+  subscribeToLogs,
+} from "./api/logs";
 
 export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -49,9 +54,9 @@ export default function App() {
     }
   }
 
-  useEffect(() => {
+ /*  useEffect(() => {
     async function loadLogs() {
-      const date = new Date(Date.now() - PERIOD_MS[period]).toISOString();
+      const date = new Date(Date.now() - PERIOD_MS[period]).toISOString()
       setLogs([]);
       setNextCursor(null);
       try {
@@ -63,7 +68,7 @@ export default function App() {
       }
     }
     loadLogs();
-  }, [period]);
+  }, [period]); */
 
   useEffect(() => {
     async function loadTopErrors() {
@@ -88,6 +93,35 @@ export default function App() {
     }
     loadErrorPoint();
   }, []);
+
+  useEffect(() => {
+    let es: EventSource | null = null;
+
+    async function loadLogs() {
+      const date = new Date(Date.now() - PERIOD_MS[period]).toISOString();
+      setLogs([]);
+      setNextCursor(null);
+      try {
+        const data = await fetchLogs({ since: date });
+        setLogs(data.logs);
+        setNextCursor(data.nextCursor);
+        if(data.logs.length > 0){
+          es = subscribeToLogs(Number(data.logs[0].id), (newLogs)=>{
+            setLogs((prev)=>{
+              const fresh = newLogs.filter((n) => !prev.some((p) => p.id === n.id));
+              return [...fresh, ...prev]
+            })
+          })
+        }
+      } catch (err) {
+        console.error("Не удалось загрузить логи:", err);
+      }
+    }
+    loadLogs();
+    return () => {
+      es?.close();
+    };
+  }, [period]);
 
   useEscapeKey(selectedLog !== null, () => setSelectedLog(null));
   useEscapeKey(isSidebarOpen, () => setIsSidebarOpen(false));

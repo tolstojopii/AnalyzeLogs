@@ -32,6 +32,10 @@ export const TopErrorsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(50).default(5)
 })
 
+export const StreamLogsQuerySchema = z.object({
+  after: z.coerce.number().int().positive().optional(),
+})
+
 
 
 export type LogEntryInput = z.infer<typeof LogEntrySchema>;
@@ -39,3 +43,4 @@ export type IngestBatchInput = z.infer<typeof IngestBatchSchema>;
 export type ListLogsQuery = z.infer<typeof ListLogsQuerySchema>;
 export type ErrorsOverTimeQuery = z.infer<typeof ErrorsOverTimeQuerySchema>;
 export type TopErrorsQuery = z.infer<typeof TopErrorsQuerySchema>;
+export type StreamLogsQuery = z.infer<typeof StreamLogsQuerySchema>;

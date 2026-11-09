@@ -4,6 +4,7 @@ import {sql} from 'kysely'
 import { db } from "./db";
 import { config } from "./config";
 import { logsRoutes } from "./routes/logs";
+import fastifySSE from "@fastify/sse";
 
 const app = Fastify({
   logger: {
@@ -16,6 +17,7 @@ const app = Fastify({
 });
 
 await app.register(cors, { origin: true });
+await app.register(fastifySSE)
 
 app.get("/health", async (_req, reply) => {
 try{

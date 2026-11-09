@@ -20,6 +20,10 @@ interface BackendTopError {
   service: string;
 }
 
+interface BackendStreamEvent {
+  logs?: BackendLog[];
+}
+
 function mapLog(raw: BackendLog): LogEntry {
   return {
     id: raw.id,
@@ -75,8 +79,7 @@ export async function fetchLogs(params?: {
     urlSearch.set("limit", `${params?.limit}`);
   }
 
-
-  const response = await fetch("/api/logs" + "?" + urlSearch.toString())
+  const response = await fetch("/api/logs" + "?" + urlSearch.toString());
   if (!response.ok) {
     throw new Error(`Failed to load logs: ${response.status}`);
   }
@@ -109,4 +112,18 @@ export async function fetchTopErrors(): Promise<TopError[]> {
   const data: { top: BackendTopError[] } = await response.json();
   const maxCount = Math.max(...data.top.map((t) => Number(t.count)));
   return data.top.map((raw) => mapTopError(raw, maxCount));
+}
+
+export function subscribeToLogs(
+  after: number,
+  onLogs: (logs: LogEntry[]) => void,
+): EventSource {
+  const es = new EventSource(`/api/logs/stream?after=${after}`);
+  es.addEventListener("message", (event) => {
+    const parsed: BackendStreamEvent = JSON.parse(event.data);
+    if (!parsed.logs) return;
+    const parsedLogs = parsed.logs.map(mapLog);
+    onLogs(parsedLogs)
+  });
+  return es;
 }

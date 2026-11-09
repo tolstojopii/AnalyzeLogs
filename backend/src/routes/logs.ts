@@ -4,6 +4,7 @@ import { logsRepository } from "../repositories/logs";
 import {
   ErrorsOverTimeQuerySchema,
   IngestBatchSchema,
+  StreamLogsQuerySchema,
   TopErrorsQuerySchema,
 } from "../schemas/logs";
 import { ListLogsQuerySchema } from "../schemas/logs";
@@ -13,9 +14,8 @@ import { ListLogsQuerySchema } from "../schemas/logs";
  */
 export const logsRoutes: FastifyPluginAsync = async (app) => {
   app.post("/logs", async (req, reply) => {
-    
     const apiKey = req.headers["x-api-key"];
-    if (apiKey !== config.INGEST_API_KEY) {
+    if (apiKey !== config.INGEST_API_KEY) { 
       return reply.code(401).send({ error: "Invalid or missing API key" });
     }
 
@@ -28,10 +28,8 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
       });
     }
 
-    
     const inserted = await logsRepository.insertMany(parsed.data.logs);
 
-    
     return reply.code(202).send({ accepted: inserted });
   });
   app.get("/logs", async (req, reply) => {
@@ -42,11 +40,11 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
         details: parsed.error.flatten(),
       });
     }
-    const rows = await logsRepository.findMany(parsed.data)
-    const hasMore = rows.length > parsed.data.limit
-    const logs = hasMore ? rows.slice(0, parsed.data.limit) : rows
+    const rows = await logsRepository.findMany(parsed.data);
+    const hasMore = rows.length > parsed.data.limit;
+    const logs = hasMore ? rows.slice(0, parsed.data.limit) : rows;
     const nextCursor = hasMore ? logs[logs.length - 1].id : null;
-    
+
     return reply.code(200).send({ logs, nextCursor });
   });
 
@@ -72,5 +70,31 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
     }
     const found = await logsRepository.topErrors(parsed.data.limit);
     return reply.send({ top: found });
+  });
+
+  app.get("/logs/stream", { sse: "only" }, async (req, reply) => {
+    const parsed = StreamLogsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        error: "Invalid request query",
+        details: parsed.error.flatten(),
+      });
+    }
+    reply.sse.keepAlive();
+    await reply.sse.send({ data: { connected: true } });
+    let lastId =
+      parsed.data.after ??
+      (reply.sse.lastEventId ? Number(reply.sse.lastEventId) : undefined);
+
+    const streamLogs = setInterval(async () => {
+      if (!reply.sse.isConnected) return;
+      if (lastId === undefined) return;
+      const rows = await logsRepository.findAfter(lastId);
+      if (rows.length === 0) return;
+      lastId = rows[0].id;
+      await reply.sse.send({ id: String(lastId), data: { logs: rows } });
+    }, 1000);
+
+    reply.sse.onClose(() => clearInterval(streamLogs));
   });
 };

@@ -83,4 +83,17 @@ export const logsRepository = {
       .limit(limit)
       .execute();
   },
+
+  async findAfter(
+    after: number,
+    limit = 100
+  ): Promise<Selectable<LogsTable>[]>{
+   return db
+    .selectFrom("logs")
+    .selectAll()
+    .where("id", ">", after)
+    .orderBy("id", "desc")
+    .limit(limit)
+    .execute()
+  }
 };
