@@ -2,12 +2,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { Icon } from "../Icon/Icon";
 import { cx } from "../../utils/cx";
 import s from "./LogStream.module.css";
-import {
-  type Period,
-  type LogEntry,
-  type LogLevel,
-  PERIOD_MS,
-} from "../../data/data";
+import {type LogEntry, type LogLevel } from "../../data/data";
 import { downloadJSON } from "../../utils/download";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
 import { useEscapeKey } from "../../hooks/useEscapeKey";
@@ -18,13 +13,15 @@ const LEVELS: readonly LogLevel[] = ["ERROR", "WARN", "INFO", "DEBUG"];
 
 interface LogStreamProps {
   logs: LogEntry[];
-  searchQuery: string;
-  period: Period;
   onCopyTrace: (message: string) => void;
   onSelectLog: (log: LogEntry) => void;
   onResetAppFilters: () => void;
   onLoadMore: () => void;
   hasMore: boolean;
+  levels: LogLevel[];
+  service: string | null;
+  onLevelsChange: (levels: LogLevel[]) => void;
+  onServiceChange: (service: string | null) => void;
 }
 
 function pillClass(level: LogLevel): string {
@@ -44,16 +41,16 @@ function pillClass(level: LogLevel): string {
 
 export function LogStream({
   logs,
-  searchQuery,
-  period,
   onCopyTrace,
   onSelectLog,
   onResetAppFilters,
   onLoadMore,
   hasMore,
+  levels,
+  service,
+  onLevelsChange,
+  onServiceChange,
 }: LogStreamProps) {
-  const [levels, setLevels] = useState<LogLevel[]>([]);
-  const [selectedService, setSelectedService] = useState<string | null>(null);
   const [isServiceOpen, setIsServiceOpen] = useState<boolean>(false);
   const [serviceQuery, setServiceQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -61,8 +58,8 @@ export function LogStream({
   const serviceSearchRef = useRef<HTMLInputElement>(null);
 
   const handleResetAll = () => {
-    setLevels([]);
-    setSelectedService(null);
+    onLevelsChange([]);
+    onServiceChange(null);
     setServiceQuery("");
     setActiveIndex(-1);
     onResetAppFilters();
@@ -80,13 +77,15 @@ export function LogStream({
   }, [logs]);
 
   const toggleLevel = (level: LogLevel) => {
-    setLevels((prev) =>
-      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level],
+    onLevelsChange(
+      levels.includes(level)
+        ? levels.filter((l) => l !== level)
+        : [...levels, level],
     );
   };
 
   const handleSelectService = (service: string | null) => {
-    setSelectedService(service);
+    onServiceChange(service);
     setIsServiceOpen(false);
     setServiceQuery("");
     setActiveIndex(-1);
@@ -118,24 +117,7 @@ export function LogStream({
     return services.filter((svc) => svc.toLowerCase().includes(q));
   }, [services, serviceQuery]);
 
-  const visibleLogs = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    const threshold = Date.now() - PERIOD_MS[period];
-    return logs.filter((log) => {
-      const matchesPeriod = log.timestamp >= threshold;
-      const matchesLevel = levels.length === 0 || levels.includes(log.level);
-      const matchesService =
-        selectedService === null || log.service === selectedService;
-
-      const matchesSearch =
-        query === "" ||
-        log.message.toLowerCase().includes(query) ||
-        log.service.toLowerCase().includes(query) ||
-        log.trace.toLowerCase().includes(query);
-
-      return matchesLevel && matchesSearch && matchesPeriod && matchesService;
-    });
-  }, [levels, logs, searchQuery, period, selectedService]);
+  const visibleLogs = logs;
 
   const copy = useCopyToClipboard(onCopyTrace);
 
@@ -193,10 +175,10 @@ export function LogStream({
               type="button"
               className={s.toggleServiceOpen}
               onClick={toggleService}
-              aria-label={`Service filter: ${selectedService ?? "All services"}`}
+              aria-label={`Service filter: ${service ?? "All services"}`}
               aria-expanded={isServiceOpen}
             >
-              <span>{selectedService ?? "All services"}</span>
+              <span>{service ?? "All services"}</span>
               <Icon name="chevron" size={12} />
             </button>
             {isServiceOpen && (
@@ -244,7 +226,7 @@ export function LogStream({
           <div className={s.tabs}>
             <button
               type="button"
-              onClick={() => setLevels([])}
+              onClick={() => onLevelsChange([])}
               className={cx(s.tab, levels.length === 0 && s.tabActive)}
             >
               ALL
@@ -328,8 +310,8 @@ export function LogStream({
                 More logs
               </button>
             )}
-            
-            {visibleLogs.length === 0  && (
+
+            {visibleLogs.length === 0 && (
               <div className={s.empty}>
                 <p className={s.emptyText}>
                   No logs match your filters. Try a different period or clear

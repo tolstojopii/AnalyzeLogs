@@ -12,6 +12,7 @@ import {
   ErrorPoint,
   TopError,
   PERIOD_MS,
+  LogLevel,
 } from "./data/data";
 import s from "./App.module.css";
 import { LogDetails } from "./components/LogDetails/LogDetails";
@@ -19,9 +20,11 @@ import { useEscapeKey } from "./hooks/useEscapeKey";
 import {
   fetchErrorsOverTime,
   fetchLogs,
+  fetchSummary,
   fetchTopErrors,
   subscribeToLogs,
 } from "./api/logs";
+import { useDebounce } from "./hooks/useDebounce";
 
 export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -33,6 +36,10 @@ export default function App() {
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   const [errorPoints, setErrorPoints] = useState<ErrorPoint[]>([]);
   const [topErrors, setTopErrors] = useState<TopError[]>([]);
+  const [levels, setLevels] = useState<LogLevel[]>([]);
+  const [service, setService] = useState<string | null>(null);
+  const [summary, setSummary] = useState({total: 0, errors: 0, warns: 0})
+  const debouncedSearch = useDebounce(searchQuery, 400);
 
   const handleResetAppFilters = () => {
     setSearchQuery("");
@@ -46,6 +53,9 @@ export default function App() {
       const { logs: newLogs, nextCursor: cursor } = await fetchLogs({
         before: nextCursor,
         since: date,
+        level: levels,
+        service: service ?? undefined,
+        search: debouncedSearch,
       });
       setLogs((prev) => [...prev, ...newLogs]);
       setNextCursor(cursor);
@@ -53,22 +63,6 @@ export default function App() {
       console.error("Не удалось загрузить логи", err);
     }
   }
-
- /*  useEffect(() => {
-    async function loadLogs() {
-      const date = new Date(Date.now() - PERIOD_MS[period]).toISOString()
-      setLogs([]);
-      setNextCursor(null);
-      try {
-        const data = await fetchLogs({ since: date });
-        setLogs(data.logs);
-        setNextCursor(data.nextCursor);
-      } catch (err) {
-        console.error("Не удалось загрузить логи:", err);
-      }
-    }
-    loadLogs();
-  }, [period]); */
 
   useEffect(() => {
     async function loadTopErrors() {
@@ -102,16 +96,31 @@ export default function App() {
       setLogs([]);
       setNextCursor(null);
       try {
-        const data = await fetchLogs({ since: date });
+        const data = await fetchLogs({
+          since: date,
+          level: levels,
+          service: service ?? undefined,
+          search: debouncedSearch,
+        });
         setLogs(data.logs);
         setNextCursor(data.nextCursor);
-        if(data.logs.length > 0){
-          es = subscribeToLogs(Number(data.logs[0].id), (newLogs)=>{
-            setLogs((prev)=>{
-              const fresh = newLogs.filter((n) => !prev.some((p) => p.id === n.id));
-              return [...fresh, ...prev]
-            })
-          })
+        if (data.logs.length > 0) {
+          es = subscribeToLogs(
+            Number(data.logs[0].id),
+            (newLogs) => {
+              setLogs((prev) => {
+                const fresh = newLogs.filter(
+                  (n) => !prev.some((p) => p.id === n.id),
+                );
+                return [...fresh, ...prev];
+              });
+            },
+            {
+              level: levels,
+              service: service ?? undefined,
+              search: debouncedSearch,
+            },
+          );
         }
       } catch (err) {
         console.error("Не удалось загрузить логи:", err);
@@ -121,7 +130,20 @@ export default function App() {
     return () => {
       es?.close();
     };
-  }, [period]);
+  }, [period, levels, service, debouncedSearch]);
+
+  useEffect(()=>{
+    async function loadSummary(){
+      const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
+      try{
+        const data = await fetchSummary(since)
+        setSummary(data)
+      }catch(err){
+        console.error("Не удалось загрузить сводку", err);
+      }
+    }
+    loadSummary();
+  }, [period])
 
   useEscapeKey(selectedLog !== null, () => setSelectedLog(null));
   useEscapeKey(isSidebarOpen, () => setIsSidebarOpen(false));
@@ -171,7 +193,7 @@ export default function App() {
               </div>
             </div>
 
-            <StatCard />
+            <StatCard summary={summary} />
 
             <section className={s.charts}>
               <ErrorsChart points={errorPoints} />
@@ -180,8 +202,10 @@ export default function App() {
 
             <LogStream
               logs={logs}
-              searchQuery={searchQuery}
-              period={period}
+              levels={levels}
+              service={service}
+              onLevelsChange={setLevels}
+              onServiceChange={setService}
               onCopyTrace={setToast}
               onSelectLog={setSelectedLog}
               onResetAppFilters={handleResetAppFilters}

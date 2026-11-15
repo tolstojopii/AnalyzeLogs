@@ -5,6 +5,7 @@ import {
   ErrorsOverTimeQuerySchema,
   IngestBatchSchema,
   StreamLogsQuerySchema,
+  SummaryQuerySchema,
   TopErrorsQuerySchema,
 } from "../schemas/logs";
 import { ListLogsQuerySchema } from "../schemas/logs";
@@ -15,7 +16,7 @@ import { ListLogsQuerySchema } from "../schemas/logs";
 export const logsRoutes: FastifyPluginAsync = async (app) => {
   app.post("/logs", async (req, reply) => {
     const apiKey = req.headers["x-api-key"];
-    if (apiKey !== config.INGEST_API_KEY) { 
+    if (apiKey !== config.INGEST_API_KEY) {
       return reply.code(401).send({ error: "Invalid or missing API key" });
     }
 
@@ -89,12 +90,24 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
     const streamLogs = setInterval(async () => {
       if (!reply.sse.isConnected) return;
       if (lastId === undefined) return;
-      const rows = await logsRepository.findAfter(lastId);
+      const rows = await logsRepository.findAfter(parsed.data, lastId);
       if (rows.length === 0) return;
       lastId = rows[0].id;
       await reply.sse.send({ id: String(lastId), data: { logs: rows } });
     }, 1000);
 
     reply.sse.onClose(() => clearInterval(streamLogs));
+  });
+
+  app.get("/logs/stats/summary", async (req, reply) => {
+    const parsed = SummaryQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        error: "Invalid request query",
+        details: parsed.error.flatten(),
+      });
+    }
+    const summary = await logsRepository.countSummary(parsed.data.since);
+    return reply.send(summary);
   });
 };

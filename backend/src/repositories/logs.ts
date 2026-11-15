@@ -1,6 +1,6 @@
 import { db } from "../db";
 import type { LogsTable } from "../db/types";
-import type { ListLogsQuery, LogEntryInput } from "../schemas/logs";
+import type { ListLogsQuery, LogEntryInput, StreamwithoutAfter } from "../schemas/logs";
 import type { Selectable } from "kysely";
 import { sql } from "kysely";
 
@@ -35,7 +35,12 @@ export const logsRepository = {
       .limit(filters.limit + 1);
 
     if (filters.level) {
-      query = query.where("level", "=", filters.level);
+      const levels = Array.isArray(filters.level)
+        ? filters.level
+        : [filters.level];
+      if (levels.length > 0) {
+        query = query.where("level", "in", levels);
+      }
     }
     if (filters.service) {
       query = query.where("service", "=", filters.service);
@@ -45,6 +50,9 @@ export const logsRepository = {
     }
     if (filters.before) {
       query = query.where("id", "<", filters.before);
+    }
+    if (filters.search) {
+      query = query.where("message", "ilike", `%${filters.search}%`);
     }
 
     return query.execute();
@@ -70,6 +78,8 @@ export const logsRepository = {
       .execute();
   },
 
+  
+
   async topErrors(
     limit: number,
   ): Promise<{ count: number; message: string; service: string }[]> {
@@ -84,16 +94,55 @@ export const logsRepository = {
       .execute();
   },
 
+  
+
   async findAfter(
+    filters: StreamwithoutAfter,
     after: number,
-    limit = 100
-  ): Promise<Selectable<LogsTable>[]>{
-   return db
+    limit = 100,
+  ): Promise<Selectable<LogsTable>[]> {
+    let query = db
+      .selectFrom("logs")
+      .selectAll()
+      .where("id", ">", after)
+      .orderBy("id", "desc")
+      .limit(limit)
+
+
+      if (filters.level) {
+      const levels = Array.isArray(filters.level)
+        ? filters.level
+        : [filters.level];
+      if (levels.length > 0) {
+        query = query.where("level", "in", levels);
+      }
+    }
+    if(filters.service){
+      query = query.where("service", "=", filters.service )
+    }
+    if(filters.search){
+      query = query.where("message", "ilike", `%${filters.search}%`);
+    }
+      
+    return query.execute()
+  },
+
+  async countSummary(since?: Date): Promise<{ total: number; errors: number; warns: number }>{
+    
+    let query = db
     .selectFrom("logs")
-    .selectAll()
-    .where("id", ">", after)
-    .orderBy("id", "desc")
-    .limit(limit)
-    .execute()
+    .select([
+      sql<number>`count(*)::int `.as("total"),
+      sql<number>`count(*) FILTER (WHERE level = 'ERROR')::int`.as("errors"),
+      sql<number>`count(*) FILTER (WHERE level = 'WARN')::int`.as("warns"),
+    ]);
+
+      if(since){
+      query = query.where("timestamp", ">=", since)
+    };
+
+    return query.executeTakeFirstOrThrow();
+    
   }
+  
 };

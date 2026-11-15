@@ -24,6 +24,14 @@ interface BackendStreamEvent {
   logs?: BackendLog[];
 }
 
+interface BackendSummary{
+  total: number;
+  errors: number;
+  warns: number;
+}
+
+
+
 function mapLog(raw: BackendLog): LogEntry {
   return {
     id: raw.id,
@@ -56,8 +64,9 @@ function mapTopError(raw: BackendTopError, maxCount: number): TopError {
 
 export async function fetchLogs(params?: {
   before?: number;
-  level?: LogLevel;
+  level?: LogLevel[];
   service?: string;
+  search?: string;
   since?: string;
   limit?: number;
 }): Promise<{ logs: LogEntry[]; nextCursor: number | null }> {
@@ -66,11 +75,16 @@ export async function fetchLogs(params?: {
   if (params?.before) {
     urlSearch.set("before", `${params?.before}`);
   }
-  if (params?.level) {
-    urlSearch.set("level", `${params?.level}`);
+  if (params?.level && params.level.length > 0) {
+    for (const l of params.level) {
+      urlSearch.append("level", l);
+    }
   }
   if (params?.service) {
     urlSearch.set("service", `${params?.service}`);
+  }
+  if(params?.search){
+    urlSearch.set("search", params.search)
   }
   if (params?.since) {
     urlSearch.set("since", `${params?.since}`);
@@ -114,16 +128,57 @@ export async function fetchTopErrors(): Promise<TopError[]> {
   return data.top.map((raw) => mapTopError(raw, maxCount));
 }
 
+
+interface StreamFilters {
+  level?: LogLevel[];
+  service?: string;
+  search?: string
+}
+
 export function subscribeToLogs(
   after: number,
   onLogs: (logs: LogEntry[]) => void,
+  filters?: StreamFilters,
 ): EventSource {
-  const es = new EventSource(`/api/logs/stream?after=${after}`);
+  
+  const urlSearch = new URLSearchParams();
+
+  if(filters?.level && filters.level.length > 0){
+    for (const l of filters.level) 
+    urlSearch.append("level", l)  
+  }
+  if(filters?.service){
+    urlSearch.set("service", `${filters.service}`)
+  }
+  if(filters?.search){
+    urlSearch.set("search", `${filters.search}`)
+  }
+    urlSearch.set("after", String(after))
+  const es = new EventSource(`/api/logs/stream` + '?' + urlSearch.toString());
+  
   es.addEventListener("message", (event) => {
     const parsed: BackendStreamEvent = JSON.parse(event.data);
     if (!parsed.logs) return;
     const parsedLogs = parsed.logs.map(mapLog);
-    onLogs(parsedLogs)
+    onLogs(parsedLogs);
   });
   return es;
+}
+
+
+export async function fetchSummary(since?: string): Promise<BackendSummary>{
+
+  const urlSearch = new URLSearchParams()
+
+  if(since){
+    urlSearch.set("since", since)
+  }
+
+  const response = await fetch("/api/logs/stats/summary" + "?" + urlSearch.toString()) ;
+  if(!response.ok){
+    throw new Error(`Failed to load summary: ${response.status}`)
+  }
+
+  const data: BackendSummary = await response.json();
+  return data;
 }
