@@ -4,6 +4,7 @@ import { logsRepository } from "../repositories/logs";
 import {
   ErrorsOverTimeQuerySchema,
   IngestBatchSchema,
+  ServicesQuerySchema,
   StreamLogsQuerySchema,
   SummaryQuerySchema,
   TopErrorsQuerySchema,
@@ -58,6 +59,7 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
       });
     }
     const found = await logsRepository.countErrorsByHour(parsed.data.hoursBack);
+
     return reply.send({ points: found });
   });
 
@@ -69,7 +71,10 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
         details: parsed.error.flatten(),
       });
     }
-    const found = await logsRepository.topErrors(parsed.data.limit);
+    const found = await logsRepository.topErrors(
+      parsed.data.limit,
+      parsed.data.since,
+    );
     return reply.send({ top: found });
   });
 
@@ -109,5 +114,17 @@ export const logsRoutes: FastifyPluginAsync = async (app) => {
     }
     const summary = await logsRepository.countSummary(parsed.data.since);
     return reply.send(summary);
+  });
+
+  app.get("/logs/services", async (req, reply) => {
+    const parsed = ServicesQuerySchema.safeParse(req.query)
+    if (!parsed.success) {
+      return reply.code(400).send({
+        error: "Invalid request query",
+        details: parsed.error.flatten(),
+      });
+    }
+    const rows = await logsRepository.distinctServices(parsed.data.since);
+    return reply.send({ services: rows });
   });
 };

@@ -1,6 +1,10 @@
 import { db } from "../db";
 import type { LogsTable } from "../db/types";
-import type { ListLogsQuery, LogEntryInput, StreamwithoutAfter } from "../schemas/logs";
+import type {
+  ListLogsQuery,
+  LogEntryInput,
+  StreamwithoutAfter,
+} from "../schemas/logs";
 import type { Selectable } from "kysely";
 import { sql } from "kysely";
 
@@ -78,23 +82,25 @@ export const logsRepository = {
       .execute();
   },
 
-  
-
   async topErrors(
     limit: number,
+    since?: Date,
   ): Promise<{ count: number; message: string; service: string }[]> {
-    return db
+    let query = db
       .selectFrom("logs")
       .select(["message", "service", sql<number>`count(*)`.as("count")])
       .where("level", "=", "ERROR")
       .groupBy("message")
       .groupBy("service")
       .orderBy("count", "desc")
-      .limit(limit)
-      .execute();
-  },
+      .limit(limit);
 
-  
+    if (since) {
+      query = query.where("timestamp", ">=", since);
+    }
+
+    return query.execute();
+  },
 
   async findAfter(
     filters: StreamwithoutAfter,
@@ -106,10 +112,9 @@ export const logsRepository = {
       .selectAll()
       .where("id", ">", after)
       .orderBy("id", "desc")
-      .limit(limit)
+      .limit(limit);
 
-
-      if (filters.level) {
+    if (filters.level) {
       const levels = Array.isArray(filters.level)
         ? filters.level
         : [filters.level];
@@ -117,32 +122,45 @@ export const logsRepository = {
         query = query.where("level", "in", levels);
       }
     }
-    if(filters.service){
-      query = query.where("service", "=", filters.service )
+    if (filters.service) {
+      query = query.where("service", "=", filters.service);
     }
-    if(filters.search){
+    if (filters.search) {
       query = query.where("message", "ilike", `%${filters.search}%`);
     }
-      
-    return query.execute()
+
+    return query.execute();
   },
 
-  async countSummary(since?: Date): Promise<{ total: number; errors: number; warns: number }>{
-    
+  async countSummary(
+    since?: Date,
+  ): Promise<{ total: number; errors: number; warns: number }> {
     let query = db
-    .selectFrom("logs")
-    .select([
-      sql<number>`count(*)::int `.as("total"),
-      sql<number>`count(*) FILTER (WHERE level = 'ERROR')::int`.as("errors"),
-      sql<number>`count(*) FILTER (WHERE level = 'WARN')::int`.as("warns"),
-    ]);
+      .selectFrom("logs")
+      .select([
+        sql<number>`count(*)::int `.as("total"),
+        sql<number>`count(*) FILTER (WHERE level = 'ERROR')::int`.as("errors"),
+        sql<number>`count(*) FILTER (WHERE level = 'WARN')::int`.as("warns"),
+      ]);
 
-      if(since){
-      query = query.where("timestamp", ">=", since)
-    };
+    if (since) {
+      query = query.where("timestamp", ">=", since);
+    }
 
     return query.executeTakeFirstOrThrow();
-    
-  }
-  
+  },
+
+  async distinctServices(since?: Date): Promise<{ service: string }[]> {
+    let query = db
+      .selectFrom("logs")
+      .select("service")
+      .distinct()
+      .orderBy("service", "asc");
+
+    if (since) {
+      query = query.where("timestamp", ">=", since);
+    }
+
+    return query.execute();
+  },
 };

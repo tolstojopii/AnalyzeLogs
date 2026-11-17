@@ -30,6 +30,10 @@ interface BackendSummary{
   warns: number;
 }
 
+interface BackendServices{
+  services: {service: string}[]
+}
+
 
 
 function mapLog(raw: BackendLog): LogEntry {
@@ -106,8 +110,14 @@ export async function fetchLogs(params?: {
   };
 }
 
-export async function fetchErrorsOverTime(): Promise<ErrorPoint[]> {
-  const response = await fetch("/api/logs/stats/over-time");
+export async function fetchErrorsOverTime(hoursBack?: number): Promise<ErrorPoint[]> {
+
+  const urlSearch = new URLSearchParams()
+  if(hoursBack){
+    urlSearch.set("hoursBack", String(hoursBack))
+  }
+
+  const response = await fetch("/api/logs/stats/over-time" + "?" + urlSearch.toString());
 
   if (!response.ok) {
     throw new Error(`Failed to load logs: ${response.status}`);
@@ -117,8 +127,14 @@ export async function fetchErrorsOverTime(): Promise<ErrorPoint[]> {
   return data.points.map(mapErrorPoint);
 }
 
-export async function fetchTopErrors(): Promise<TopError[]> {
-  const response = await fetch("/api/logs/stats/top");
+export async function fetchTopErrors(since?: string): Promise<TopError[]> {
+
+  const urlSearch = new URLSearchParams()
+  if(since){
+    urlSearch.set("since", since)
+  }
+
+  const response = await fetch("/api/logs/stats/top" + "?" + urlSearch.toString());
 
   if (!response.ok) {
     throw new Error(`Failed to load logs: ${response.status}`);
@@ -181,4 +197,18 @@ export async function fetchSummary(since?: string): Promise<BackendSummary>{
 
   const data: BackendSummary = await response.json();
   return data;
+}
+
+export async function fetchServices(since?:string ): Promise<string[]>{
+  const urlSearch = new URLSearchParams()
+  if(since){
+    urlSearch.set("since", since)
+  }
+
+  const response = await fetch("/api/logs/services" + "?" + urlSearch.toString())
+  if(!response.ok){
+    throw new Error(`Failed to load services: ${response.status}`)
+  }
+  const data: BackendServices = await response.json()
+  return data.services.map(r => r.service)
 }

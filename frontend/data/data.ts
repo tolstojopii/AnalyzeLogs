@@ -1,4 +1,4 @@
-import type { IconName } from "../components/Icon/Icon";
+
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG";
 
 export type Period = "1h" | "6h" | "24h" | "7d";
@@ -18,15 +18,6 @@ export interface LogEntry {
   message: string;
   trace: string;
 }
-export interface StatCard {
-  label: string;
-  value: string;
-  meta: string;
-  tone: "cyan" | "rose" | "amber" | "emerald";
-  icon: IconName;
-  metaTone?: "danger";
-}
-
 export interface TopError {
   label: string;
   service: string;
@@ -38,35 +29,3 @@ export interface ErrorPoint {
   hour: string;
   errors: number;
 }
-
-export const statCards: StatCard[] = [
-  {
-    label: "Total logs",
-    value: "2.84M",
-    meta: "12.4% vs yesterday",
-    tone: "cyan",
-    icon: "activity",
-  },
-  {
-    label: "Errors",
-    value: "94",
-    meta: "3.3% error rate",
-    tone: "rose",
-    icon: "alert",
-    metaTone: "danger",
-  },
-  {
-    label: "Warnings",
-    value: "317",
-    meta: "11.1% of events",
-    tone: "amber",
-    icon: "activity",
-  },
-  {
-    label: "Avg. latency",
-    value: "184ms",
-    meta: "24ms faster",
-    tone: "emerald",
-    icon: "activity",
-  },
-];

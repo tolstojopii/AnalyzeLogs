@@ -30,7 +30,8 @@ export const ErrorsOverTimeQuerySchema = z.object({
 })
 
 export const TopErrorsQuerySchema = z.object({
-  limit: z.coerce.number().int().positive().max(50).default(5)
+  limit: z.coerce.number().int().positive().max(50).default(5),
+  since: z.coerce.date().optional()
 })
 
 export const StreamLogsQuerySchema = z.object({
@@ -44,6 +45,10 @@ export const SummaryQuerySchema = z.object({
   since: z.coerce.date().optional()
 })
 
+export const ServicesQuerySchema = z.object({
+  since: z.coerce.date().optional()
+})
+
 export type StreamwithoutAfter = Omit<StreamLogsQuery, "after">
 
 export type LogEntryInput = z.infer<typeof LogEntrySchema>;
@@ -52,4 +57,5 @@ export type ListLogsQuery = z.infer<typeof ListLogsQuerySchema>;
 export type ErrorsOverTimeQuery = z.infer<typeof ErrorsOverTimeQuerySchema>;
 export type TopErrorsQuery = z.infer<typeof TopErrorsQuerySchema>;
 export type StreamLogsQuery = z.infer<typeof StreamLogsQuerySchema>;
-export type SummayQuery = z.infer<typeof SummaryQuerySchema>
+export type SummaryQuery = z.infer<typeof SummaryQuerySchema>
+export type ServicesQuery = z.infer<typeof ServicesQuerySchema>

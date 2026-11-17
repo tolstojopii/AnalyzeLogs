@@ -20,6 +20,7 @@ import { useEscapeKey } from "./hooks/useEscapeKey";
 import {
   fetchErrorsOverTime,
   fetchLogs,
+  fetchServices,
   fetchSummary,
   fetchTopErrors,
   subscribeToLogs,
@@ -38,7 +39,8 @@ export default function App() {
   const [topErrors, setTopErrors] = useState<TopError[]>([]);
   const [levels, setLevels] = useState<LogLevel[]>([]);
   const [service, setService] = useState<string | null>(null);
-  const [summary, setSummary] = useState({total: 0, errors: 0, warns: 0})
+  const [summary, setSummary] = useState({ total: 0, errors: 0, warns: 0 });
+  const [services, setServices] = useState<string[]>([]);
   const debouncedSearch = useDebounce(searchQuery, 400);
 
   const handleResetAppFilters = () => {
@@ -66,27 +68,29 @@ export default function App() {
 
   useEffect(() => {
     async function loadTopErrors() {
+      const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
       try {
-        const data = await fetchTopErrors();
+        const data = await fetchTopErrors(since);
         setTopErrors(data);
       } catch (err) {
         console.error("Не удалось загрузить топ ошибок:", err);
       }
     }
     loadTopErrors();
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     async function loadErrorPoint() {
+      const hoursBack = PERIOD_MS[period] / (60 * 60 * 1000);
       try {
-        const data = await fetchErrorsOverTime();
+        const data = await fetchErrorsOverTime(hoursBack);
         setErrorPoints(data);
       } catch (err) {
         console.error("Не удалось загрузить точки графика:", err);
       }
     }
     loadErrorPoint();
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     let es: EventSource | null = null;
@@ -132,18 +136,34 @@ export default function App() {
     };
   }, [period, levels, service, debouncedSearch]);
 
-  useEffect(()=>{
-    async function loadSummary(){
+  useEffect(() => {
+    async function loadSummary() {
       const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
-      try{
-        const data = await fetchSummary(since)
-        setSummary(data)
-      }catch(err){
+      try {
+        const data = await fetchSummary(since);
+        setSummary(data);
+      } catch (err) {
         console.error("Не удалось загрузить сводку", err);
       }
     }
     loadSummary();
-  }, [period])
+  }, [period]);
+
+  useEffect(() => {
+    async function loadServices() {
+      const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
+      try {
+        const data = await fetchServices(since);
+        setServices(data);
+        if (service !== null && !data.includes(service)) {
+          setService(null);
+        }
+      } catch (err) {
+        console.error("Не удалось загрузить сервисы", err);
+      }
+    }
+    loadServices();
+  }, [period]);
 
   useEscapeKey(selectedLog !== null, () => setSelectedLog(null));
   useEscapeKey(isSidebarOpen, () => setIsSidebarOpen(false));
@@ -204,6 +224,7 @@ export default function App() {
               logs={logs}
               levels={levels}
               service={service}
+              services={services}
               onLevelsChange={setLevels}
               onServiceChange={setService}
               onCopyTrace={setToast}

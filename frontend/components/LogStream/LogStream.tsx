@@ -22,6 +22,7 @@ interface LogStreamProps {
   service: string | null;
   onLevelsChange: (levels: LogLevel[]) => void;
   onServiceChange: (service: string | null) => void;
+  services: string[]
 }
 
 function pillClass(level: LogLevel): string {
@@ -50,6 +51,7 @@ export function LogStream({
   service,
   onLevelsChange,
   onServiceChange,
+  services,
 }: LogStreamProps) {
   const [isServiceOpen, setIsServiceOpen] = useState<boolean>(false);
   const [serviceQuery, setServiceQuery] = useState("");
@@ -72,10 +74,8 @@ export function LogStream({
     });
   };
 
-  const services = useMemo(() => {
-    return [...new Set(logs.map((log) => log.service))].sort();
-  }, [logs]);
 
+  
   const toggleLevel = (level: LogLevel) => {
     onLevelsChange(
       levels.includes(level)
