@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { type ErrorPoint } from "../../data/data";
+import { RequestStatus, type ErrorPoint } from "../../data/data";
 import s from "./ErrorsChart.module.css";
 
 const WIDTH = 720;
@@ -22,8 +22,31 @@ function buildLinePath(points: Point[]): string {
   return points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`).join(" ");
 }
 
-export function ErrorsChart({ points }: { points: ErrorPoint[] }) {
+export function ErrorsChart({
+  points,
+  status,
+}: {
+  points: ErrorPoint[];
+  status: RequestStatus;
+}) {
   const gradientId = useId();
+
+  if (status === "loading" || status === "error") {
+    return (
+      <div className={`${s.panel} ${s.wide}`}>
+        <div className={s.head}>
+          <p className={s.title}>Errors over time</p>
+          <p className={s.subtitle}>Error volume in the last 24 hours</p>
+        </div>
+        <div className={s.subtitle}>
+          <p>
+            {status === "loading" ? "Loading…" : "Chart data is not available"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (points.length === 0)
     return (
       <div className={`${s.panel} ${s.wide}`}>

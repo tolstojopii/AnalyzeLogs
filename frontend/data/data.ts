@@ -1,7 +1,8 @@
-
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG";
 
 export type Period = "1h" | "6h" | "24h" | "7d";
+
+export type RequestStatus = "idle" | "loading" | "success" | "error";
 
 export const PERIOD_MS: Record<Period, number> = {
   "1h": 1 * 60 * 60 * 1000,

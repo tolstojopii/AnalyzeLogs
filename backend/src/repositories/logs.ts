@@ -69,7 +69,7 @@ export const logsRepository = {
       .selectFrom("logs")
       .select([
         sql<Date>`date_trunc('hour', timestamp)`.as("hour"),
-        sql<number>`count(*)`.as("errors"),
+        sql<number>`count(*)::int`.as("errors"),
       ])
       .where("level", "=", "ERROR")
       .where(
@@ -88,7 +88,7 @@ export const logsRepository = {
   ): Promise<{ count: number; message: string; service: string }[]> {
     let query = db
       .selectFrom("logs")
-      .select(["message", "service", sql<number>`count(*)`.as("count")])
+      .select(["message", "service", sql<number>`count(*)::int`.as("count")])
       .where("level", "=", "ERROR")
       .groupBy("message")
       .groupBy("service")

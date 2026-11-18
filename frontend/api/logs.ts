@@ -11,12 +11,12 @@ interface BackendLog {
 
 interface BackendErrorPoint {
   hour: string;
-  errors: string;
+  errors: number;
 }
 
 interface BackendTopError {
   message: string;
-  count: string;
+  count: number;
   service: string;
 }
 
@@ -24,17 +24,15 @@ interface BackendStreamEvent {
   logs?: BackendLog[];
 }
 
-interface BackendSummary{
+interface BackendSummary {
   total: number;
   errors: number;
   warns: number;
 }
 
-interface BackendServices{
-  services: {service: string}[]
+interface BackendServices {
+  services: { service: string }[];
 }
-
-
 
 function mapLog(raw: BackendLog): LogEntry {
   return {
@@ -52,17 +50,16 @@ function mapErrorPoint(raw: BackendErrorPoint): ErrorPoint {
     String(new Date(raw.hour).getUTCHours()).padStart(2, "0") + ":00";
   return {
     hour: hoursDate,
-    errors: Number(raw.errors),
+    errors: raw.errors,
   };
 }
 
 function mapTopError(raw: BackendTopError, maxCount: number): TopError {
-  const count = Number(raw.count);
   return {
     label: raw.message,
-    count,
+    count: raw.count,
     service: raw.service,
-    width: maxCount > 0 ? Math.round((count / maxCount) * 100) : 0,
+    width: maxCount > 0 ? Math.round((raw.count / maxCount) * 100) : 0,
   };
 }
 
@@ -87,8 +84,8 @@ export async function fetchLogs(params?: {
   if (params?.service) {
     urlSearch.set("service", `${params?.service}`);
   }
-  if(params?.search){
-    urlSearch.set("search", params.search)
+  if (params?.search) {
+    urlSearch.set("search", params.search);
   }
   if (params?.since) {
     urlSearch.set("since", `${params?.since}`);
@@ -110,14 +107,17 @@ export async function fetchLogs(params?: {
   };
 }
 
-export async function fetchErrorsOverTime(hoursBack?: number): Promise<ErrorPoint[]> {
-
-  const urlSearch = new URLSearchParams()
-  if(hoursBack){
-    urlSearch.set("hoursBack", String(hoursBack))
+export async function fetchErrorsOverTime(
+  hoursBack?: number,
+): Promise<ErrorPoint[]> {
+  const urlSearch = new URLSearchParams();
+  if (hoursBack) {
+    urlSearch.set("hoursBack", String(hoursBack));
   }
 
-  const response = await fetch("/api/logs/stats/over-time" + "?" + urlSearch.toString());
+  const response = await fetch(
+    "/api/logs/stats/over-time" + "?" + urlSearch.toString(),
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to load logs: ${response.status}`);
@@ -128,27 +128,27 @@ export async function fetchErrorsOverTime(hoursBack?: number): Promise<ErrorPoin
 }
 
 export async function fetchTopErrors(since?: string): Promise<TopError[]> {
-
-  const urlSearch = new URLSearchParams()
-  if(since){
-    urlSearch.set("since", since)
+  const urlSearch = new URLSearchParams();
+  if (since) {
+    urlSearch.set("since", since);
   }
 
-  const response = await fetch("/api/logs/stats/top" + "?" + urlSearch.toString());
+  const response = await fetch(
+    "/api/logs/stats/top" + "?" + urlSearch.toString(),
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to load logs: ${response.status}`);
   }
   const data: { top: BackendTopError[] } = await response.json();
-  const maxCount = Math.max(...data.top.map((t) => Number(t.count)));
+  const maxCount = Math.max(...data.top.map((t) => t.count));
   return data.top.map((raw) => mapTopError(raw, maxCount));
 }
-
 
 interface StreamFilters {
   level?: LogLevel[];
   service?: string;
-  search?: string
+  search?: string;
 }
 
 export function subscribeToLogs(
@@ -156,22 +156,20 @@ export function subscribeToLogs(
   onLogs: (logs: LogEntry[]) => void,
   filters?: StreamFilters,
 ): EventSource {
-  
   const urlSearch = new URLSearchParams();
 
-  if(filters?.level && filters.level.length > 0){
-    for (const l of filters.level) 
-    urlSearch.append("level", l)  
+  if (filters?.level && filters.level.length > 0) {
+    for (const l of filters.level) urlSearch.append("level", l);
   }
-  if(filters?.service){
-    urlSearch.set("service", `${filters.service}`)
+  if (filters?.service) {
+    urlSearch.set("service", `${filters.service}`);
   }
-  if(filters?.search){
-    urlSearch.set("search", `${filters.search}`)
+  if (filters?.search) {
+    urlSearch.set("search", `${filters.search}`);
   }
-    urlSearch.set("after", String(after))
-  const es = new EventSource(`/api/logs/stream` + '?' + urlSearch.toString());
-  
+  urlSearch.set("after", String(after));
+  const es = new EventSource(`/api/logs/stream` + "?" + urlSearch.toString());
+
   es.addEventListener("message", (event) => {
     const parsed: BackendStreamEvent = JSON.parse(event.data);
     if (!parsed.logs) return;
@@ -181,34 +179,36 @@ export function subscribeToLogs(
   return es;
 }
 
+export async function fetchSummary(since?: string): Promise<BackendSummary> {
+  const urlSearch = new URLSearchParams();
 
-export async function fetchSummary(since?: string): Promise<BackendSummary>{
-
-  const urlSearch = new URLSearchParams()
-
-  if(since){
-    urlSearch.set("since", since)
+  if (since) {
+    urlSearch.set("since", since);
   }
 
-  const response = await fetch("/api/logs/stats/summary" + "?" + urlSearch.toString()) ;
-  if(!response.ok){
-    throw new Error(`Failed to load summary: ${response.status}`)
+  const response = await fetch(
+    "/api/logs/stats/summary" + "?" + urlSearch.toString(),
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to load summary: ${response.status}`);
   }
 
   const data: BackendSummary = await response.json();
   return data;
 }
 
-export async function fetchServices(since?:string ): Promise<string[]>{
-  const urlSearch = new URLSearchParams()
-  if(since){
-    urlSearch.set("since", since)
+export async function fetchServices(since?: string): Promise<string[]> {
+  const urlSearch = new URLSearchParams();
+  if (since) {
+    urlSearch.set("since", since);
   }
 
-  const response = await fetch("/api/logs/services" + "?" + urlSearch.toString())
-  if(!response.ok){
-    throw new Error(`Failed to load services: ${response.status}`)
+  const response = await fetch(
+    "/api/logs/services" + "?" + urlSearch.toString(),
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to load services: ${response.status}`);
   }
-  const data: BackendServices = await response.json()
-  return data.services.map(r => r.service)
+  const data: BackendServices = await response.json();
+  return data.services.map((r) => r.service);
 }

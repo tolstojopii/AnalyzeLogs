@@ -13,6 +13,7 @@ import {
   TopError,
   PERIOD_MS,
   LogLevel,
+  RequestStatus,
 } from "./data/data";
 import s from "./App.module.css";
 import { LogDetails } from "./components/LogDetails/LogDetails";
@@ -26,6 +27,7 @@ import {
   subscribeToLogs,
 } from "./api/logs";
 import { useDebounce } from "./hooks/useDebounce";
+import { runQuery } from "./utils/runQuery";
 
 export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -40,13 +42,21 @@ export default function App() {
   const [levels, setLevels] = useState<LogLevel[]>([]);
   const [service, setService] = useState<string | null>(null);
   const [summary, setSummary] = useState({ total: 0, errors: 0, warns: 0 });
+  const [summaryStatus, setSummaryStatus] = useState<RequestStatus>("idle");
+  const [topStatus, setTopStatus] = useState<RequestStatus>("idle");
+  const [chartStatus, setChartStatus] = useState<RequestStatus>("idle");
   const [services, setServices] = useState<string[]>([]);
+  const [logsStatus, setLogsStatus] = useState<RequestStatus>("idle");
+  const [reloadKey, setReloadKey] = useState(0);
   const debouncedSearch = useDebounce(searchQuery, 400);
 
   const handleResetAppFilters = () => {
     setSearchQuery("");
     setPeriod("24h");
   };
+
+  const hasActiveFilters =
+    levels.length > 0 || service !== null || debouncedSearch !== "";
 
   async function loadMore() {
     if (nextCursor === null) return;
@@ -67,29 +77,17 @@ export default function App() {
   }
 
   useEffect(() => {
-    async function loadTopErrors() {
-      const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
-      try {
-        const data = await fetchTopErrors(since);
-        setTopErrors(data);
-      } catch (err) {
-        console.error("Не удалось загрузить топ ошибок:", err);
-      }
-    }
-    loadTopErrors();
+    const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
+    runQuery(() => fetchTopErrors(since), setTopStatus, setTopErrors);
   }, [period]);
 
   useEffect(() => {
-    async function loadErrorPoint() {
-      const hoursBack = PERIOD_MS[period] / (60 * 60 * 1000);
-      try {
-        const data = await fetchErrorsOverTime(hoursBack);
-        setErrorPoints(data);
-      } catch (err) {
-        console.error("Не удалось загрузить точки графика:", err);
-      }
-    }
-    loadErrorPoint();
+    const hoursBack = PERIOD_MS[period] / (60 * 60 * 1000);
+    runQuery(
+      () => fetchErrorsOverTime(hoursBack),
+      setChartStatus,
+      setErrorPoints,
+    );
   }, [period]);
 
   useEffect(() => {
@@ -137,16 +135,8 @@ export default function App() {
   }, [period, levels, service, debouncedSearch]);
 
   useEffect(() => {
-    async function loadSummary() {
-      const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
-      try {
-        const data = await fetchSummary(since);
-        setSummary(data);
-      } catch (err) {
-        console.error("Не удалось загрузить сводку", err);
-      }
-    }
-    loadSummary();
+    const since = new Date(Date.now() - PERIOD_MS[period]).toISOString();
+    runQuery(() => fetchSummary(since), setSummaryStatus, setSummary);
   }, [period]);
 
   useEffect(() => {
@@ -213,11 +203,11 @@ export default function App() {
               </div>
             </div>
 
-            <StatCard summary={summary} />
+            <StatCard summary={summary} status={summaryStatus} />
 
             <section className={s.charts}>
-              <ErrorsChart points={errorPoints} />
-              <TopErrors errors={topErrors} />
+              <ErrorsChart points={errorPoints} status={chartStatus} />
+              <TopErrors errors={topErrors} status={topStatus} />
             </section>
 
             <LogStream

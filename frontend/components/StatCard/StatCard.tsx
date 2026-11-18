@@ -1,16 +1,22 @@
+import { RequestStatus } from "../../data/data";
 import { Icon } from "../Icon/Icon";
 import s from "./StatCard.module.css";
 
 interface StatCardProps {
   summary: { total: number; errors: number; warns: number };
+  status: RequestStatus;
 }
 
-export function StatCard({summary}: StatCardProps) {
-
+export function StatCard({ summary, status }: StatCardProps) {
   const cards = [
-    {label: "Total logs", value: summary.total, tone: "cyan", icon: "activity"},
-    {label: "Errors", value: summary.errors, tone: "rose", icon: "alert"},
-    {label: "Warns", value: summary.warns, tone: "amber", icon: "activity"},
+    {
+      label: "Total logs",
+      value: summary.total,
+      tone: "cyan",
+      icon: "activity",
+    },
+    { label: "Errors", value: summary.errors, tone: "rose", icon: "alert" },
+    { label: "Warns", value: summary.warns, tone: "amber", icon: "activity" },
   ] as const;
 
   return (
@@ -23,7 +29,13 @@ export function StatCard({summary}: StatCardProps) {
               <Icon name={card.icon} />
             </div>
           </div>
-          <p className={s.value}>{card.value}</p>
+          {status === "loading" ? (
+            <p className={s.valueSkeleton}>---------</p>
+          ) : status === "error" ? (
+            <p className={s.valueSkeleton}>Couldn't load stats</p>
+          ) : (
+            <p className={s.value}>{card.value}</p>
+          )}
         </article>
       ))}
     </section>
